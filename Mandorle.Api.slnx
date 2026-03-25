@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Mandorle.Api/Mandorle.Api.csproj" />
+  <Project Path="Mandorle.Application/Mandorle.Application.csproj" Id="c303b4b0-3e56-4437-9a27-dd111bf56e5d" />
+  <Project Path="Mandorle.Domain/Mandorle.Domain.csproj" Id="77482b24-b7a1-42c8-aa3f-a4906bc9fc49" />
+  <Project Path="Mandorle.Infrastructure/Mandorle.Infrastructure.csproj" Id="72267ad3-b4ea-4d17-9727-0224cbbbf14d" />
+</Solution>

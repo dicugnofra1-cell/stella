@@ -1,15 +1,14 @@
-﻿using Mandorle.Application.Commands;
-using Mandorle.Domain.Entities;
+﻿using Mandorle.Domain.Entities;
 using Mandorle.Domain.Interfaces;
 using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Mandorle.Application.Handlers
+namespace Mandorle.Application.Products.Commands.CreateProduct
 {
 
-    public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, Product>
+    public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, int>
     {
         private readonly IProductRepository _repository;
 
@@ -18,7 +17,7 @@ namespace Mandorle.Application.Handlers
             _repository = repository;
         }
 
-        public async Task<Product> Handle(CreateProductCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             var product = new Product
             {
@@ -26,10 +25,7 @@ namespace Mandorle.Application.Handlers
                 Sku = request.SKU
             };
 
-            await _repository.AddAsync(product);
-            await _repository.SaveChangesAsync();
-
-            return product;
+            return await _repository.AddAsync(product, cancellationToken);
         }
     }
 }

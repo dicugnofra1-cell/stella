@@ -1,4 +1,4 @@
-using Mandorle.Application.Commands;
+using Mandorle.Application.Products.Commands.CreateProduct;
 using Mandorle.Domain.Interfaces;
 using Mandorle.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

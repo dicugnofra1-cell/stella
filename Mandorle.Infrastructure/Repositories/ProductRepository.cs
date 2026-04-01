@@ -12,15 +12,18 @@ public class ProductRepository : IProductRepository
         _context = context;
     }
 
-    public async Task<Product?> GetByIdAsync(int id) =>
-        await _context.Products.FindAsync(id);
+    public async Task<Product?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
+        await _context.Products
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
-    public async Task<List<Product>> GetAllAsync() =>
-        await _context.Products.ToListAsync();
+    public async Task<List<Product>> GetAllAsync(CancellationToken cancellationToken) =>
+        await _context.Products
+            .ToListAsync(cancellationToken);
 
-    public async Task AddAsync(Product product) =>
-        await _context.Products.AddAsync(product);
-
-    public async Task SaveChangesAsync() =>
-        await _context.SaveChangesAsync();
+    public async Task<int> AddAsync(Product product, CancellationToken cancellationToken)
+    {
+        _context.Products.Add(product);
+        await _context.SaveChangesAsync(cancellationToken);
+        return product.Id;
+    }
 }

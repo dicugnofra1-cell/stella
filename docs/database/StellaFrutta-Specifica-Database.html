@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <title>Stella Frutta - Specifica Database</title>
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; margin: 34px 40px; color: #1f2933; line-height: 1.48; }
+    h1, h2, h3 { color: #14395b; margin-bottom: 8px; }
+    h1 { font-size: 28px; border-bottom: 2px solid #14395b; padding-bottom: 8px; margin-bottom: 18px; }
+    h2 { font-size: 20px; margin-top: 28px; border-bottom: 1px solid #cbd5df; padding-bottom: 4px; }
+    h3 { font-size: 16px; margin-top: 20px; }
+    p, li, td, th { font-size: 11.5pt; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 18px 0; }
+    th, td { border: 1px solid #b8c4d1; padding: 8px; vertical-align: top; text-align: left; }
+    th { background: #eef3f8; }
+    code { font-family: Consolas, monospace; background: #f1f4f7; padding: 1px 4px; }
+    .box { background: #f7fafc; border-left: 4px solid #14395b; padding: 12px 14px; margin: 14px 0; }
+    .warn { background: #fff8e6; border: 1px solid #f2d38a; padding: 10px 12px; margin: 12px 0; }
+    .muted { color: #5f6b76; }
+  </style>
+</head>
+<body>
+  <h1>Stella Frutta - Specifica Database</h1>
+
+  <p><strong>Versione:</strong> 1.0</p>
+  <p><strong>Data:</strong> 01/04/2026</p>
+  <p><strong>Scopo:</strong> definire il modello dati relazionale del Core Stella Frutta come base per database SQL Server, Entity Framework, migrazioni, repository e API.</p>
+
+  <h2>1. Obiettivi del modello dati</h2>
+  <ul>
+    <li>Supportare in modo coerente prodotti, lotti, genealogia, magazzino, qualità, ordini e audit.</li>
+    <li>Garantire tracciabilità completa dei lotti a monte e a valle.</li>
+    <li>Supportare segregazione BIO/non BIO.</li>
+    <li>Consentire evoluzione graduale del dominio senza refactor distruttivi.</li>
+    <li>Rendere semplice la traduzione in Entity Framework e SQL Server.</li>
+  </ul>
+
+  <h2>2. Convenzioni generali</h2>
+  <ul>
+    <li>Tutte le tabelle principali hanno chiave primaria <code>Id</code> di tipo intero o bigint identity.</li>
+    <li>Le date tecniche usano <code>datetime2</code>.</li>
+    <li>I campi monetari o quantitativi usano <code>decimal</code>.</li>
+    <li>I campi stato e tipo sono preferibilmente <code>nvarchar</code> con vincoli applicativi oppure enum mappati a stringa.</li>
+    <li>I codici pubblici come <code>Sku</code> e <code>BatchCode</code> devono avere vincolo di univocità.</li>
+    <li>Le cancellazioni fisiche vanno evitate sulle entità core; preferire stato o archiviazione logica.</li>
+  </ul>
+
+  <h2>3. Aree del database</h2>
+  <table>
+    <tr><th>Area</th><th>Scopo</th></tr>
+    <tr><td>Anagrafiche</td><td>Products, Suppliers, Customers, Documents, Certifications</td></tr>
+    <tr><td>Tracciabilità</td><td>Batches, BatchLinks, PublicTraceViews</td></tr>
+    <tr><td>Operatività</td><td>InventoryMovements, Orders, OrderItems</td></tr>
+    <tr><td>Qualità</td><td>QualityChecks, NonConformities</td></tr>
+    <tr><td>Audit</td><td>AuditLog</td></tr>
+  </table>
+
+  <h2>4. Schema concettuale sintetico</h2>
+  <div class="box">
+    <p><strong>Relazioni principali</strong></p>
+    <ul>
+      <li>Un <code>Customer</code> ha molti <code>CustomerAddresses</code>.</li>
+      <li>Un <code>Product</code> ha molti <code>Batch</code>.</li>
+      <li>Un <code>Supplier</code> ha molte <code>Certification</code> e puo fornire molti <code>Batch</code>.</li>
+      <li>Un <code>Batch</code> puo avere molti <code>BatchLink</code> in ingresso e in uscita.</li>
+      <li>Un <code>Batch</code> ha molti <code>InventoryMovement</code>, <code>QualityCheck</code> e <code>NonConformity</code>.</li>
+      <li>Un <code>Customer</code> ha molti <code>Order</code>.</li>
+      <li>Un <code>Order</code> ha molti <code>OrderItem</code>.</li>
+      <li>Un <code>Order</code> e una <code>OrderItem</code> possono avere una o più <code>StockReservation</code>.</li>
+      <li>Le entità critiche producono record in <code>AuditLog</code>.</li>
+    </ul>
+  </div>
+
+  <h2>5. Tabelle anagrafiche</h2>
+
+  <h3>5.1 Products</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>Sku</td><td>nvarchar(50)</td><td>No</td><td>Unique</td></tr>
+    <tr><td>Name</td><td>nvarchar(150)</td><td>No</td><td>Nome prodotto</td></tr>
+    <tr><td>Description</td><td>nvarchar(max)</td><td>Si</td><td>Descrizione</td></tr>
+    <tr><td>UnitOfMeasure</td><td>nvarchar(20)</td><td>No</td><td>kg, pz, conf</td></tr>
+    <tr><td>Category</td><td>nvarchar(100)</td><td>Si</td><td>Categoria logica</td></tr>
+    <tr><td>ChannelB2BEnabled</td><td>bit</td><td>No</td><td>Default 1</td></tr>
+    <tr><td>ChannelB2CEnabled</td><td>bit</td><td>No</td><td>Default 1</td></tr>
+    <tr><td>Active</td><td>bit</td><td>No</td><td>Default 1</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Default getutcdate/getdate</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime2</td><td>Si</td><td>Ultimo aggiornamento</td></tr>
+  </table>
+
+  <h3>5.2 Suppliers</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>Name</td><td>nvarchar(200)</td><td>No</td><td>Nome o ragione sociale</td></tr>
+    <tr><td>VatNumber</td><td>nvarchar(30)</td><td>Si</td><td>P.IVA / CF</td></tr>
+    <tr><td>Address</td><td>nvarchar(250)</td><td>Si</td><td>Indirizzo</td></tr>
+    <tr><td>Email</td><td>nvarchar(150)</td><td>Si</td><td>Contatto</td></tr>
+    <tr><td>Phone</td><td>nvarchar(50)</td><td>Si</td><td>Contatto</td></tr>
+    <tr><td>Status</td><td>nvarchar(30)</td><td>No</td><td>active/suspended/archived</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Data creazione</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime2</td><td>Si</td><td>Ultima modifica</td></tr>
+  </table>
+
+  <h3>5.3 SupplierDocuments</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>SupplierId</td><td>int</td><td>No</td><td>FK Suppliers</td></tr>
+    <tr><td>DocumentType</td><td>nvarchar(50)</td><td>No</td><td>contract, certificate, delivery_note, ecc.</td></tr>
+    <tr><td>FileName</td><td>nvarchar(255)</td><td>No</td><td>Nome file</td></tr>
+    <tr><td>StoragePath</td><td>nvarchar(500)</td><td>No</td><td>Percorso o chiave storage</td></tr>
+    <tr><td>UploadedAt</td><td>datetime2</td><td>No</td><td>Data caricamento</td></tr>
+    <tr><td>UploadedBy</td><td>nvarchar(100)</td><td>Si</td><td>Utente</td></tr>
+  </table>
+
+  <h3>5.4 Certifications</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>SupplierId</td><td>int</td><td>No</td><td>FK Suppliers</td></tr>
+    <tr><td>Type</td><td>nvarchar(50)</td><td>No</td><td>BIO o altra</td></tr>
+    <tr><td>Authority</td><td>nvarchar(150)</td><td>No</td><td>Ente</td></tr>
+    <tr><td>Code</td><td>nvarchar(100)</td><td>Si</td><td>Codice certificazione</td></tr>
+    <tr><td>IssueDate</td><td>date</td><td>Si</td><td>Data rilascio</td></tr>
+    <tr><td>ExpiryDate</td><td>date</td><td>No</td><td>Data scadenza</td></tr>
+    <tr><td>Status</td><td>nvarchar(30)</td><td>No</td><td>valid/expired/revoked</td></tr>
+    <tr><td>DocumentId</td><td>int</td><td>Si</td><td>FK SupplierDocuments opzionale</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Data creazione</td></tr>
+  </table>
+
+  <h3>5.5 Customers</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>Type</td><td>nvarchar(20)</td><td>No</td><td>B2B/B2C</td></tr>
+    <tr><td>Name</td><td>nvarchar(200)</td><td>No</td><td>Nome o ragione sociale</td></tr>
+    <tr><td>VatNumber</td><td>nvarchar(30)</td><td>Si</td><td>B2B tipicamente</td></tr>
+    <tr><td>Email</td><td>nvarchar(150)</td><td>No</td><td>Contatto principale</td></tr>
+    <tr><td>Phone</td><td>nvarchar(50)</td><td>Si</td><td>Contatto</td></tr>
+    <tr><td>Status</td><td>nvarchar(30)</td><td>No</td><td>active/blocked/archived</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Data creazione</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime2</td><td>Si</td><td>Ultima modifica</td></tr>
+  </table>
+
+  <h3>5.6 CustomerAddresses</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>CustomerId</td><td>int</td><td>No</td><td>FK Customers</td></tr>
+    <tr><td>AddressType</td><td>nvarchar(30)</td><td>No</td><td>Shipping/Billing/HeadOffice</td></tr>
+    <tr><td>RecipientName</td><td>nvarchar(200)</td><td>No</td><td>Destinatario</td></tr>
+    <tr><td>Street</td><td>nvarchar(250)</td><td>No</td><td>Indirizzo</td></tr>
+    <tr><td>Street2</td><td>nvarchar(250)</td><td>Si</td><td>Interno, piano, riferimento</td></tr>
+    <tr><td>City</td><td>nvarchar(100)</td><td>No</td><td>Città</td></tr>
+    <tr><td>PostalCode</td><td>nvarchar(20)</td><td>No</td><td>CAP</td></tr>
+    <tr><td>Province</td><td>nvarchar(50)</td><td>No</td><td>Provincia</td></tr>
+    <tr><td>Country</td><td>nvarchar(100)</td><td>No</td><td>Nazione</td></tr>
+    <tr><td>IsDefault</td><td>bit</td><td>No</td><td>Default per il tipo</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Data creazione</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime2</td><td>Si</td><td>Ultima modifica</td></tr>
+  </table>
+
+  <h2>6. Tabelle di tracciabilità</h2>
+
+  <h3>6.1 Batches</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>BatchCode</td><td>nvarchar(100)</td><td>No</td><td>Unique</td></tr>
+    <tr><td>ProductId</td><td>int</td><td>No</td><td>FK Products</td></tr>
+    <tr><td>BatchType</td><td>nvarchar(20)</td><td>No</td><td>raw/process/packed</td></tr>
+    <tr><td>Status</td><td>nvarchar(30)</td><td>No</td><td>creato/in_verifica/conforme/bloccato/esaurito/archiviato</td></tr>
+    <tr><td>BioFlag</td><td>bit</td><td>No</td><td>Proprieta del lotto</td></tr>
+    <tr><td>SupplierId</td><td>int</td><td>Si</td><td>FK Suppliers, tipico per raw</td></tr>
+    <tr><td>ProductionDate</td><td>date</td><td>Si</td><td>Produzione o ricezione</td></tr>
+    <tr><td>ExpirationDate</td><td>date</td><td>Si</td><td>Scadenza/TMC</td></tr>
+    <tr><td>Notes</td><td>nvarchar(max)</td><td>Si</td><td>Note</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Data creazione</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime2</td><td>Si</td><td>Ultima modifica</td></tr>
+  </table>
+
+  <h3>6.2 BatchLinks</h3>
+  <div class="warn">
+    <p><strong>Tabella obbligatoria</strong></p>
+    <p>Questa tabella e necessaria per modellare in modo corretto la genealogia dei lotti. Il semplice <code>ParentBatchId</code> non e sufficiente per casi reali di trasformazione.</p>
+  </div>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>ParentBatchId</td><td>int</td><td>No</td><td>FK Batches</td></tr>
+    <tr><td>ChildBatchId</td><td>int</td><td>No</td><td>FK Batches</td></tr>
+    <tr><td>QuantityUsed</td><td>decimal(18,3)</td><td>No</td><td>Quantita consumata</td></tr>
+    <tr><td>UnitOfMeasure</td><td>nvarchar(20)</td><td>No</td><td>Coerente col prodotto</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Data collegamento</td></tr>
+  </table>
+
+  <h3>6.3 PublicTraceViews</h3>
+  <p>Tabella o vista denormalizzata opzionale per l'esposizione pubblica della tracciabilita via QR.</p>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>BatchId</td><td>int</td><td>No</td><td>FK Batches / PK logica</td></tr>
+    <tr><td>BatchCode</td><td>nvarchar(100)</td><td>No</td><td>Codice lotto</td></tr>
+    <tr><td>ProductName</td><td>nvarchar(150)</td><td>No</td><td>Descrizione pubblica</td></tr>
+    <tr><td>BioFlag</td><td>bit</td><td>No</td><td>Informazione esponibile se prevista</td></tr>
+    <tr><td>OriginInfo</td><td>nvarchar(max)</td><td>Si</td><td>Dati safe di origine</td></tr>
+    <tr><td>MainDates</td><td>nvarchar(max)</td><td>Si</td><td>Date principali serializzate o denormalizzate</td></tr>
+    <tr><td>LastUpdatedAt</td><td>datetime2</td><td>No</td><td>Aggiornamento vista</td></tr>
+  </table>
+
+  <h2>7. Tabelle operative</h2>
+
+  <h3>7.1 InventoryMovements</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>ProductId</td><td>int</td><td>No</td><td>FK Products</td></tr>
+    <tr><td>BatchId</td><td>int</td><td>No</td><td>FK Batches</td></tr>
+    <tr><td>MovementType</td><td>nvarchar(30)</td><td>No</td><td>load/unload/waste/reserve/release/return/transfer</td></tr>
+    <tr><td>Quantity</td><td>decimal(18,3)</td><td>No</td><td>Quantita movimentata</td></tr>
+    <tr><td>MovementDate</td><td>datetime2</td><td>No</td><td>Timestamp</td></tr>
+    <tr><td>Reason</td><td>nvarchar(250)</td><td>Si</td><td>Causale</td></tr>
+    <tr><td>ReferenceType</td><td>nvarchar(50)</td><td>Si</td><td>Order, Batch, Manual, Return</td></tr>
+    <tr><td>ReferenceId</td><td>nvarchar(100)</td><td>Si</td><td>Riferimento esterno o interno</td></tr>
+    <tr><td>UserId</td><td>nvarchar(100)</td><td>No</td><td>Utente autore</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Data persistenza</td></tr>
+  </table>
+
+  <h3>7.2 Orders</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>CustomerId</td><td>int</td><td>No</td><td>FK Customers</td></tr>
+    <tr><td>OrderType</td><td>nvarchar(20)</td><td>No</td><td>B2C/B2B</td></tr>
+    <tr><td>Status</td><td>nvarchar(30)</td><td>No</td><td>creato/in_attesa_pagamento/pagato/in_preparazione/spedito/chiuso/annullato/fallito</td></tr>
+    <tr><td>PaymentStatus</td><td>nvarchar(30)</td><td>Si</td><td>pending/paid/failed/refunded</td></tr>
+    <tr><td>TotalAmount</td><td>decimal(18,2)</td><td>No</td><td>Totale ordine</td></tr>
+    <tr><td>Currency</td><td>nvarchar(10)</td><td>No</td><td>EUR ecc.</td></tr>
+    <tr><td>Notes</td><td>nvarchar(max)</td><td>Si</td><td>Note commerciali o operative</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Creazione ordine</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime2</td><td>Si</td><td>Ultima modifica</td></tr>
+  </table>
+
+  <h3>7.3 OrderItems</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>OrderId</td><td>int</td><td>No</td><td>FK Orders</td></tr>
+    <tr><td>ProductId</td><td>int</td><td>No</td><td>FK Products</td></tr>
+    <tr><td>Quantity</td><td>decimal(18,3)</td><td>No</td><td>Quantita ordinata</td></tr>
+    <tr><td>UnitPrice</td><td>decimal(18,2)</td><td>No</td><td>Prezzo storico</td></tr>
+    <tr><td>TaxAmount</td><td>decimal(18,2)</td><td>Si</td><td>Imposta riga</td></tr>
+    <tr><td>ReservedBatchId</td><td>int</td><td>Si</td><td>FK Batches opzionale</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Data creazione riga</td></tr>
+  </table>
+
+  <h3>7.4 StockReservations</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>OrderId</td><td>int</td><td>No</td><td>FK Orders</td></tr>
+    <tr><td>OrderItemId</td><td>int</td><td>No</td><td>FK OrderItems</td></tr>
+    <tr><td>ProductId</td><td>int</td><td>No</td><td>FK Products</td></tr>
+    <tr><td>BatchId</td><td>int</td><td>Si</td><td>FK Batches, se la riserva è legata a un lotto specifico</td></tr>
+    <tr><td>Quantity</td><td>decimal(18,3)</td><td>No</td><td>Quantità riservata</td></tr>
+    <tr><td>Status</td><td>nvarchar(30)</td><td>No</td><td>Active/Released/Consumed/Expired/Cancelled</td></tr>
+    <tr><td>ReservationType</td><td>nvarchar(30)</td><td>No</td><td>Checkout/Manual/PreAllocation</td></tr>
+    <tr><td>ExpiresAt</td><td>datetime2</td><td>Si</td><td>Scadenza riserva</td></tr>
+    <tr><td>CreatedAt</td><td>datetime2</td><td>No</td><td>Creazione riserva</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime2</td><td>Si</td><td>Ultima modifica</td></tr>
+    <tr><td>ReleasedAt</td><td>datetime2</td><td>Si</td><td>Data rilascio</td></tr>
+    <tr><td>ConsumedAt</td><td>datetime2</td><td>Si</td><td>Data consumo</td></tr>
+    <tr><td>Notes</td><td>nvarchar(max)</td><td>Si</td><td>Note operative</td></tr>
+  </table>
+
+  <h2>8. Tabelle qualità</h2>
+
+  <h3>8.1 QualityChecks</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>BatchId</td><td>int</td><td>No</td><td>FK Batches</td></tr>
+    <tr><td>ChecklistVersion</td><td>nvarchar(50)</td><td>No</td><td>Versione checklist</td></tr>
+    <tr><td>Result</td><td>nvarchar(20)</td><td>No</td><td>ok/warning/ko</td></tr>
+    <tr><td>Notes</td><td>nvarchar(max)</td><td>Si</td><td>Commenti</td></tr>
+    <tr><td>CheckedAt</td><td>datetime2</td><td>No</td><td>Data controllo</td></tr>
+    <tr><td>CheckedBy</td><td>nvarchar(100)</td><td>No</td><td>Utente</td></tr>
+  </table>
+
+  <h3>8.2 NonConformities</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>int identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>BatchId</td><td>int</td><td>No</td><td>FK Batches</td></tr>
+    <tr><td>Severity</td><td>nvarchar(20)</td><td>No</td><td>low/medium/high/critical</td></tr>
+    <tr><td>Status</td><td>nvarchar(30)</td><td>No</td><td>aperta/in_analisi/in_risoluzione/chiusa</td></tr>
+    <tr><td>Description</td><td>nvarchar(max)</td><td>No</td><td>Descrizione problema</td></tr>
+    <tr><td>CorrectiveAction</td><td>nvarchar(max)</td><td>Si</td><td>Azione correttiva</td></tr>
+    <tr><td>OpenedBy</td><td>nvarchar(100)</td><td>No</td><td>Utente apertura</td></tr>
+    <tr><td>OpenedAt</td><td>datetime2</td><td>No</td><td>Data apertura</td></tr>
+    <tr><td>ClosedBy</td><td>nvarchar(100)</td><td>Si</td><td>Utente chiusura</td></tr>
+    <tr><td>ClosedAt</td><td>datetime2</td><td>Si</td><td>Data chiusura</td></tr>
+  </table>
+
+  <h2>9. Tabella audit</h2>
+
+  <h3>9.1 AuditLog</h3>
+  <table>
+    <tr><th>Colonna</th><th>Tipo SQL suggerito</th><th>Null</th><th>Note</th></tr>
+    <tr><td>Id</td><td>bigint identity</td><td>No</td><td>PK</td></tr>
+    <tr><td>EntityName</td><td>nvarchar(100)</td><td>No</td><td>Nome entità</td></tr>
+    <tr><td>EntityId</td><td>nvarchar(100)</td><td>No</td><td>Chiave logica</td></tr>
+    <tr><td>Action</td><td>nvarchar(50)</td><td>No</td><td>create/update/delete/status_change</td></tr>
+    <tr><td>OldValues</td><td>nvarchar(max)</td><td>Si</td><td>JSON o snapshot serializzato</td></tr>
+    <tr><td>NewValues</td><td>nvarchar(max)</td><td>Si</td><td>JSON o snapshot serializzato</td></tr>
+    <tr><td>ChangedBy</td><td>nvarchar(100)</td><td>No</td><td>Utente autore</td></tr>
+    <tr><td>ChangedAt</td><td>datetime2</td><td>No</td><td>Data evento</td></tr>
+    <tr><td>CorrelationId</td><td>nvarchar(100)</td><td>Si</td><td>Allineamento tecnico</td></tr>
+  </table>
+
+  <h2>10. Vincoli funzionali principali</h2>
+  <ol>
+    <li><code>Products.Sku</code> deve essere univoco.</li>
+    <li><code>Batches.BatchCode</code> deve essere univoco.</li>
+    <li><code>BatchLinks</code> non puo collegare un lotto a se stesso.</li>
+    <li>Ogni <code>InventoryMovement</code> deve avere prodotto, lotto, tipo, quantita, data e autore.</li>
+    <li>Una <code>NonConformity</code> chiusa deve avere almeno <code>ClosedAt</code> o <code>ClosedBy</code>.</li>
+    <li>Le certificazioni BIO valide devono essere verificabili rispetto alla data di utilizzo del lotto.</li>
+    <li>Può esistere un solo indirizzo <code>IsDefault = 1</code> per <code>CustomerId + AddressType</code>.</li>
+    <li>Una <code>StockReservation</code> attiva non può superare la disponibilità residua del prodotto/lotto.</li>
+    <li>Una riserva <code>Consumed</code> o <code>Released</code> non può tornare attiva senza un nuovo record o una riapertura esplicita.</li>
+  </ol>
+
+  <h2>11. Indici consigliati</h2>
+  <table>
+    <tr><th>Tabella</th><th>Indice</th><th>Motivazione</th></tr>
+    <tr><td>Products</td><td>UX_Products_Sku</td><td>Ricerca e unicità SKU</td></tr>
+    <tr><td>Batches</td><td>UX_Batches_BatchCode</td><td>Ricerca lotto e unicità</td></tr>
+    <tr><td>Batches</td><td>IX_Batches_ProductId_Status</td><td>Ricerca lotti per prodotto e stato</td></tr>
+    <tr><td>BatchLinks</td><td>IX_BatchLinks_ParentBatchId</td><td>Tracciabilità a valle</td></tr>
+    <tr><td>BatchLinks</td><td>IX_BatchLinks_ChildBatchId</td><td>Tracciabilità a monte</td></tr>
+    <tr><td>InventoryMovements</td><td>IX_InventoryMovements_BatchId_MovementDate</td><td>Storico movimenti lotto</td></tr>
+    <tr><td>InventoryMovements</td><td>IX_InventoryMovements_ProductId_MovementDate</td><td>Storico movimenti prodotto</td></tr>
+    <tr><td>Orders</td><td>IX_Orders_CustomerId_CreatedAt</td><td>Ricerca ordini cliente</td></tr>
+    <tr><td>Orders</td><td>IX_Orders_Status</td><td>Filtro operativo ordini</td></tr>
+    <tr><td>CustomerAddresses</td><td>IX_CustomerAddresses_CustomerId_AddressType</td><td>Ricerca indirizzi per tipo</td></tr>
+    <tr><td>StockReservations</td><td>IX_StockReservations_OrderId</td><td>Riserve per ordine</td></tr>
+    <tr><td>StockReservations</td><td>IX_StockReservations_OrderItemId</td><td>Riserve per riga ordine</td></tr>
+    <tr><td>StockReservations</td><td>IX_StockReservations_ProductId_Status</td><td>Disponibilità e riserve attive</td></tr>
+    <tr><td>StockReservations</td><td>IX_StockReservations_BatchId_Status</td><td>Riserve su lotto specifico</td></tr>
+    <tr><td>AuditLog</td><td>IX_AuditLog_EntityName_EntityId</td><td>Consultazione audit per entità</td></tr>
+    <tr><td>AuditLog</td><td>IX_AuditLog_ChangedAt</td><td>Consultazione cronologica</td></tr>
+  </table>
+
+  <h2>12. Vincoli e scelte EF / implementazione</h2>
+  <ul>
+    <li>Mappare gli enum applicativi a stringa leggibile in database dove utile.</li>
+    <li>Configurare esplicitamente le relazioni su <code>BatchLink</code> con doppia FK verso <code>Batches</code>.</li>
+    <li>Configurare <code>Customer -> CustomerAddresses</code> come 1:N con delete behavior restrittivo o controllato.</li>
+    <li>Configurare <code>Order/OrderItem -> StockReservations</code> come 1:N senza cascade delete distruttiva.</li>
+    <li>Evitare cascade delete aggressive sulle entità core.</li>
+    <li>Usare <code>decimal(18,3)</code> per quantita operative.</li>
+    <li>Usare <code>decimal(18,2)</code> per importi.</li>
+    <li>Valutare <code>rowversion</code> su tabelle sensibili se si vuole gestire concorrenza ottimistica.</li>
+  </ul>
+
+  <h2>13. Query critiche da supportare</h2>
+  <ul>
+    <li>Ricerca lotto per codice.</li>
+    <li>Ricostruzione genealogia a monte e a valle.</li>
+    <li>Calcolo disponibilita prodotto/lotto.</li>
+    <li>Calcolo disponibilità vendibile = stock reale - riserve attive.</li>
+    <li>Lista ordini per stato.</li>
+    <li>Lista non conformità aperte.</li>
+    <li>Storico audit per entità.</li>
+  </ul>
+
+  <h2>14. Decisioni aperte sul database</h2>
+  <ul>
+    <li>gestione multi-magazzino o singolo deposito logico</li>
+    <li>gestione indirizzi cliente in tabelle dedicate o embedded</li>
+    <li>modello checklist qualità dettagliato o semplificato nella prima fase</li>
+    <li>eventuale tabella dedicata per riserve stock invece di solo movement type</li>
+  </ul>
+
+  <h2>15. Output attesi dal prossimo step</h2>
+  <ol>
+    <li>Traduzione del modello in classi entity e configurazioni EF.</li>
+    <li>Creazione delle prime migration SQL Server.</li>
+    <li>Definizione degli endpoint sulle tabelle core.</li>
+    <li>Scelta di eventuali tabelle ausiliarie mancanti.</li>
+  </ol>
+
+  <p class="muted">Fine specifica database.</p>
+</body>
+</html>

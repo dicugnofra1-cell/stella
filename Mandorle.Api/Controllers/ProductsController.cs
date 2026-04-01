@@ -1,5 +1,4 @@
-﻿using Mandorle.Application.Commands;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Mandorle.Api.Controllers
@@ -15,11 +14,11 @@ namespace Mandorle.Api.Controllers
             _mediator = mediator;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateProductCommand command)
-        {
-            var result = await _mediator.Send(command);
-            return Ok(result);
-        }
+        //[HttpPost]
+        //public async Task<IActionResult> Create(CreateProductCommand command)
+        //{
+        //    var result = await _mediator.Send(command);
+        //    return Ok(result);
+        //}
     }
 }

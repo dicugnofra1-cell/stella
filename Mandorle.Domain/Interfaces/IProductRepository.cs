@@ -8,9 +8,8 @@ namespace Mandorle.Domain.Interfaces
 
     public interface IProductRepository
     {
-        Task<Product?> GetByIdAsync(int id);
-        Task<List<Product>> GetAllAsync();
-        Task AddAsync(Product product);
-        Task SaveChangesAsync();
+        Task<int> AddAsync(Product product, CancellationToken cancellationToken);
+        Task<List<Product>> GetAllAsync(CancellationToken cancellationToken);
+        Task<Product?> GetByIdAsync(int id, CancellationToken cancellationToken);
     }
 }

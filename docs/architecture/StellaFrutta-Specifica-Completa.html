@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <title>Stella Frutta - Specifica Completa</title>
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; margin: 34px 40px; color: #1f2933; line-height: 1.48; }
+    h1, h2, h3, h4 { color: #14395b; margin-bottom: 8px; }
+    h1 { font-size: 28px; border-bottom: 2px solid #14395b; padding-bottom: 8px; margin-bottom: 18px; }
+    h2 { font-size: 20px; margin-top: 28px; border-bottom: 1px solid #cbd5df; padding-bottom: 4px; }
+    h3 { font-size: 16px; margin-top: 20px; }
+    h4 { font-size: 13px; margin-top: 14px; }
+    p, li, td, th { font-size: 11.5pt; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 18px 0; }
+    th, td { border: 1px solid #b8c4d1; padding: 8px; vertical-align: top; text-align: left; }
+    th { background: #eef3f8; }
+    code { font-family: Consolas, monospace; background: #f1f4f7; padding: 1px 4px; }
+    .box { background: #f7fafc; border-left: 4px solid #14395b; padding: 12px 14px; margin: 14px 0; }
+    .warn { background: #fff8e6; border: 1px solid #f2d38a; padding: 10px 12px; margin: 12px 0; }
+    .muted { color: #5f6b76; }
+  </style>
+</head>
+<body>
+  <h1>Stella Frutta - Specifica Completa</h1>
+
+  <p><strong>Versione:</strong> finale di lavoro</p>
+  <p><strong>Data:</strong> 31/03/2026</p>
+  <p><strong>Obiettivo:</strong> documento unico di riferimento per architettura, dominio, processi, modello dati, use case, API iniziali, audit, logging, monitor, sicurezza e roadmap della piattaforma Stella Frutta.</p>
+
+  <h2>1. Scopo del documento</h2>
+  <p>Questo documento descrive la piattaforma Stella Frutta in modo sufficientemente completo da fungere da base operativa per analisi, progettazione tecnica, sviluppo backend, definizione database, implementazione dei moduli, integrazione dell'e-commerce e impostazione del monitor tecnico esterno.</p>
+  <p>Il documento non ha funzione commerciale o di presentazione, ma di <strong>specifica operativa</strong>. Ogni sezione e pensata per ridurre ambiguita progettuali e supportare decisioni tecniche coerenti.</p>
+
+  <h2>2. Obiettivi della piattaforma</h2>
+  <ul>
+    <li>Centralizzare in un unico Core la gestione di prodotti, lotti, qualita, stock, ordini e tracciabilita.</li>
+    <li>Garantire segregazione BIO/non BIO e auditabilita delle operazioni sensibili.</li>
+    <li>Esporre API affidabili per frontend e backoffice.</li>
+    <li>Preparare un monitor tecnico esterno per logging, tracing e query logging.</li>
+    <li>Predisporre la piattaforma a evoluzioni successive verso B2B piu completo, IoT e AI.</li>
+  </ul>
+
+  <h2>3. Principi architetturali</h2>
+  <ol>
+    <li><strong>Single Source of Truth:</strong> il Core applicativo e l'unica fonte dati ufficiale per prodotti, lotti, giacenze, ordini, qualita e audit.</li>
+    <li><strong>Modular monolith:</strong> il sistema nasce come monolite modulare per minimizzare la complessita distribuita e mantenere coerenza transazionale.</li>
+    <li><strong>Backend-first:</strong> i client consumano API e non gestiscono logiche di dominio autonome.</li>
+    <li><strong>Auditabilita:</strong> modifiche critiche su lotti, ordini, certificazioni e qualita devono essere persistite nel Core.</li>
+    <li><strong>Osservabilita disaccoppiata:</strong> log tecnici, trace e query vengono inviati in modo asincrono verso un monitor esterno.</li>
+    <li><strong>Evoluzione progressiva:</strong> i moduli devono nascere con confini chiari per future estrazioni in servizi senza riscrivere il dominio.</li>
+  </ol>
+
+  <h2>4. Decisioni architetturali formalizzate</h2>
+  <ul>
+    <li><strong>DA-01:</strong> <code>Mandorle.Api</code> e il Core applicativo Stella Frutta.</li>
+    <li><strong>DA-02:</strong> il Core viene sviluppato come monolite modulare.</li>
+    <li><strong>DA-03:</strong> il monitor tecnico e un servizio separato, asincrono e non business-critical.</li>
+    <li><strong>DA-04:</strong> la libreria shared e unica, ma contiene solo concern tecnici cross-cutting.</li>
+    <li><strong>DA-05:</strong> audit funzionale e logging tecnico restano separati.</li>
+    <li><strong>DA-06:</strong> la genealogia dei lotti e modellata tramite tabella dedicata <code>BatchLink</code>.</li>
+    <li><strong>DA-07:</strong> il flag BIO e una proprieta del lotto, non del prodotto.</li>
+    <li><strong>DA-08:</strong> le giacenze sono derivate dai movimenti e non aggiornate in modo arbitrario.</li>
+  </ul>
+
+  <h2>5. Architettura della piattaforma</h2>
+  <div class="box">
+    <p><strong>Vista logica</strong></p>
+    <ul>
+      <li><code>Frontend E-commerce</code> e <code>Frontend Backoffice</code> consumano API del Core.</li>
+      <li><code>Mandorle.Api</code> gestisce il dominio, le transazioni e l'audit.</li>
+      <li><code>StellaFrutta.Shared</code> fornisce supporto tecnico comune.</li>
+      <li><code>Queue/Broker</code> riceve i messaggi tecnici dal Core.</li>
+      <li><code>StellaFrutta.Monitoring.Api</code> consuma i messaggi e li persiste su database tecnico.</li>
+      <li><code>SQL Server Core</code> memorizza il dominio e l'audit.</li>
+    </ul>
+  </div>
+
+  <h3>5.1 Motivazione della scelta monolitica</h3>
+  <p>La scelta del monolite modulare e corretta per Stella Frutta perche il dominio e fortemente coeso. Lotti, stock, qualita, ordini e tracciabilita devono muoversi insieme e in modo coerente. Un'architettura distribuita introdurrebbe da subito problemi di consistenza, orchestrazione e debugging che non generano un reale vantaggio nella fase iniziale.</p>
+
+  <h3>5.2 Evoluzione prevista</h3>
+  <ul>
+    <li>BFF e-commerce o backend dedicato al canale digitale.</li>
+    <li>monitor/events service piu avanzato.</li>
+    <li>collector IoT dedicato.</li>
+    <li>moduli analytics o AI.</li>
+  </ul>
+
+  <h2>6. Struttura della solution</h2>
+  <table>
+    <tr><th>Componente</th><th>Tipo</th><th>Responsabilita</th></tr>
+    <tr><td><code>Mandorle.Api</code></td><td>Monolite modulare</td><td>Dominio, API, transazioni, audit, integrazione con provider esterni</td></tr>
+    <tr><td><code>StellaFrutta.Shared</code></td><td>Libreria tecnica unica</td><td>Context, logging, observability, web helpers, caching, audit contracts</td></tr>
+    <tr><td><code>StellaFrutta.Monitoring.Api</code></td><td>Microservizio tecnico</td><td>Consumo coda, validazione e persistenza di log/trace/query</td></tr>
+  </table>
+
+  <h2>7. Libreria shared unica</h2>
+  <p>La libreria shared viene realizzata come un solo progetto, con organizzazione interna a cartelle. Questa scelta riduce la frammentazione, ma richiede forte disciplina sui contenuti.</p>
+  <table>
+    <tr><th>Cartella</th><th>Scopo</th><th>Contenuti attesi</th></tr>
+    <tr><td><code>Abstractions</code></td><td>Contratti tecnici</td><td>Interfacce cross-cutting</td></tr>
+    <tr><td><code>Context</code></td><td>Contesto richiesta</td><td>CorrelationId, RequestContext, user info minima</td></tr>
+    <tr><td><code>Logging</code></td><td>Supporto logging</td><td>helper, wrapper, enrichment</td></tr>
+    <tr><td><code>Observability</code></td><td>Monitor integration</td><td>LogMessage, TraceMessage, QueryMessage, publisher coda</td></tr>
+    <tr><td><code>WebApi</code></td><td>Supporto API</td><td>middleware, filtri, standard error response</td></tr>
+    <tr><td><code>Caching</code></td><td>Supporto cache</td><td>contratti e helper</td></tr>
+    <tr><td><code>Audit</code></td><td>Supporto audit</td><td>contratti, helper, serializer tecnico</td></tr>
+    <tr><td><code>Extensions</code></td><td>Utility</td><td>extension methods e helper tecnici</td></tr>
+  </table>
+
+  <div class="warn">
+    <p><strong>Regola di governance</strong></p>
+    <p>La shared library non puo contenere codice di dominio Stella Frutta. Deve restare tecnica, riusabile e neutra.</p>
+  </div>
+
+  <h2>8. Monitor tecnico esterno</h2>
+  <p>Il monitor tecnico e un servizio separato che riceve eventi tecnici dal Core tramite coda. La finalita del monitor e la <strong>osservabilita tecnica</strong>, non la tracciatura ufficiale delle operazioni di business.</p>
+  <ol>
+    <li><code>Mandorle.Api</code> genera eventi tecnici.</li>
+    <li><code>StellaFrutta.Shared.Observability</code> li pubblica su coda.</li>
+    <li><code>StellaFrutta.Monitoring.Api</code> li consuma.</li>
+    <li>Il monitor valida e persiste i dati.</li>
+  </ol>
+
+  <h2>9. Perimetro funzionale</h2>
+  <h3>9.1 Incluso nel primo impianto</h3>
+  <ul>
+    <li>prodotti</li>
+    <li>fornitori e certificazioni</li>
+    <li>clienti</li>
+    <li>lotti e genealogia</li>
+    <li>qualita e non conformita</li>
+    <li>magazzino e movimenti</li>
+    <li>ordini B2C</li>
+    <li>predisposizione B2B</li>
+    <li>QR e tracciabilita pubblica</li>
+    <li>audit e monitoraggio tecnico</li>
+  </ul>
+
+  <h3>9.2 Escluso dal primo impianto</h3>
+  <ul>
+    <li>contabilita completa</li>
+    <li>WMS avanzato</li>
+    <li>MES completo</li>
+    <li>AI operativa</li>
+    <li>EDI avanzato</li>
+  </ul>
+
+  <h2>10. Attori, ruoli e responsabilita</h2>
+  <table>
+    <tr><th>Attore</th><th>Responsabilita</th></tr>
+    <tr><td>Admin</td><td>Configurazione, parametri, utenti, supervisione globale</td></tr>
+    <tr><td>Qualita</td><td>Controlli, non conformita, blocchi/sblocchi lotto, validazione conformita</td></tr>
+    <tr><td>Magazzino</td><td>Carichi, scarichi, giacenze, prelievi, spedizioni</td></tr>
+    <tr><td>Produzione</td><td>Trasformazioni, confezionamento, consuntivi di processo</td></tr>
+    <tr><td>Commerciale</td><td>Clienti, ordini B2B, catalogo e condizioni commerciali</td></tr>
+    <tr><td>Cliente B2C</td><td>Catalogo, checkout, consultazione ordini</td></tr>
+    <tr><td>Cliente B2B</td><td>Catalogo/listino e inserimento ordini B2B</td></tr>
+    <tr><td>Utente pubblico</td><td>Consultazione dati safe via QR</td></tr>
+  </table>
+
+  <h2>11. Matrice ruoli e permessi</h2>
+  <table>
+    <tr><th>Operazione</th><th>Admin</th><th>Qualita</th><th>Magazzino</th><th>Produzione</th><th>Commerciale</th><th>Cliente</th></tr>
+    <tr><td>Crea prodotto</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>Si</td><td>No</td></tr>
+    <tr><td>Modifica prodotto</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>Si</td><td>No</td></tr>
+    <tr><td>Crea fornitore</td><td>Si</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Associa certificazione</td><td>Si</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Crea raw batch</td><td>Si</td><td>No</td><td>Si</td><td>Si</td><td>No</td><td>No</td></tr>
+    <tr><td>Crea process batch</td><td>Si</td><td>No</td><td>No</td><td>Si</td><td>No</td><td>No</td></tr>
+    <tr><td>Crea packed batch</td><td>Si</td><td>No</td><td>No</td><td>Si</td><td>No</td><td>No</td></tr>
+    <tr><td>Blocca lotto</td><td>Si</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Sblocca lotto</td><td>Si</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Carico/scarico stock</td><td>Si</td><td>No</td><td>Si</td><td>Si</td><td>No</td><td>No</td></tr>
+    <tr><td>Registra controllo qualita</td><td>Si</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Apre/chiude NC</td><td>Si</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Crea ordine B2B</td><td>Si</td><td>No</td><td>No</td><td>No</td><td>Si</td><td>No</td></tr>
+    <tr><td>Crea ordine B2C</td><td>No</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Si</td></tr>
+    <tr><td>Prepara/spedisce ordine</td><td>Si</td><td>No</td><td>Si</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Consulta QR pubblico</td><td>Si</td><td>Si</td><td>Si</td><td>Si</td><td>Si</td><td>Si</td></tr>
+  </table>
+
+  <h2>12. Glossario di dominio</h2>
+  <ul>
+    <li><strong>Product:</strong> entita commerciale di catalogo.</li>
+    <li><strong>Batch:</strong> entita operativa tracciabile associata al prodotto.</li>
+    <li><strong>Raw Batch:</strong> lotto di materia prima in ingresso.</li>
+    <li><strong>Process Batch:</strong> lotto derivato da trasformazione.</li>
+    <li><strong>Packed Batch:</strong> lotto confezionato.</li>
+    <li><strong>Batch genealogy:</strong> rete di relazioni tra lotti input e output.</li>
+    <li><strong>Inventory movement:</strong> evento che modifica lo stock.</li>
+    <li><strong>Quality check:</strong> controllo con checklist e risultato.</li>
+    <li><strong>Non conformity:</strong> anomalia strutturata associata a un lotto.</li>
+    <li><strong>Audit trail:</strong> traccia persistente di operazioni business-sensitive.</li>
+  </ul>
+
+  <h2>13. Moduli del Core</h2>
+  <ul>
+    <li><strong>Products</strong>: anagrafiche prodotto e dati di catalogo.</li>
+    <li><strong>Suppliers</strong>: fornitori, documenti, certificazioni.</li>
+    <li><strong>Customers</strong>: clienti B2C/B2B.</li>
+    <li><strong>Batches</strong>: creazione e gestione lotti.</li>
+    <li><strong>Traceability</strong>: genealogia e QR.</li>
+    <li><strong>Inventory</strong>: movimenti e disponibilita.</li>
+    <li><strong>Quality</strong>: checklist, esiti, NC.</li>
+    <li><strong>Orders</strong>: ordini, righe, stati, spedizioni.</li>
+    <li><strong>Audit</strong>: tracciatura operazioni critiche.</li>
+  </ul>
+
+  <h2>14. Flussi logici end-to-end</h2>
+
+  <h3>14.1 Ricezione materia prima</h3>
+  <ol>
+    <li>L'operatore registra l'ingresso merce.</li>
+    <li>Seleziona fornitore e prodotto.</li>
+    <li>Inserisce quantita, date e riferimenti documentali.</li>
+    <li>Il sistema crea il <code>Raw Batch</code>.</li>
+    <li>Il sistema registra il movimento di carico.</li>
+    <li>Il lotto entra in verifica o in stato conforme in base alle regole.</li>
+  </ol>
+  <p><strong>Regole:</strong> lotto non conforme non disponibile; certificazione BIO non valida blocca la classificazione BIO del lotto.</p>
+
+  <h3>14.2 Lavorazione</h3>
+  <ol>
+    <li>L'operatore seleziona uno o piu lotti di input.</li>
+    <li>Inserisce consumi, scarti, resa e parametri di processo.</li>
+    <li>Il sistema verifica disponibilita e coerenza.</li>
+    <li>Il sistema crea un <code>Process Batch</code>.</li>
+    <li>Crea i record <code>BatchLink</code>.</li>
+    <li>Registra scarico input e carico output.</li>
+  </ol>
+
+  <h3>14.3 Confezionamento</h3>
+  <ol>
+    <li>L'operatore seleziona un lotto di processo.</li>
+    <li>Inserisce formato, packaging e quantita.</li>
+    <li>Il sistema crea un <code>Packed Batch</code>.</li>
+    <li>Genera QR e dati etichetta.</li>
+    <li>Aggiorna la disponibilita vendibile.</li>
+  </ol>
+
+  <h3>14.4 Controllo qualita</h3>
+  <ol>
+    <li>L'utente qualita apre un controllo sul lotto.</li>
+    <li>Compila checklist e salva esito.</li>
+    <li>In caso di KO il sistema blocca il lotto e apre una non conformita se necessario.</li>
+  </ol>
+
+  <h3>14.5 Ordine B2C</h3>
+  <ol>
+    <li>Il cliente consulta catalogo e stock esposto dal backend.</li>
+    <li>Conferma il carrello.</li>
+    <li>Il backend crea ordine e righe.</li>
+    <li>Registra o calcola la riserva stock.</li>
+    <li>Avvia il flusso di pagamento esterno.</li>
+    <li>Alla conferma, l'ordine passa a <code>pagato</code>.</li>
+    <li>Magazzino prepara e spedisce l'ordine.</li>
+  </ol>
+
+  <h3>14.6 Consultazione pubblica via QR</h3>
+  <ol>
+    <li>L'utente legge il QR.</li>
+    <li>Il sistema recupera la vista pubblica del lotto.</li>
+    <li>Mostra solo dati safe di origine e tracciabilita.</li>
+  </ol>
+
+  <h2>15. Modello dati</h2>
+
+  <h3>15.1 Product</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>Sku</td><td>string</td><td>Si</td><td>Univoco</td></tr>
+    <tr><td>Name</td><td>string</td><td>Si</td><td>Nome commerciale</td></tr>
+    <tr><td>Description</td><td>string</td><td>No</td><td>Descrizione</td></tr>
+    <tr><td>UnitOfMeasure</td><td>string</td><td>Si</td><td>kg, pz, confezione</td></tr>
+    <tr><td>ChannelB2BEnabled</td><td>bool</td><td>Si</td><td>Canale B2B</td></tr>
+    <tr><td>ChannelB2CEnabled</td><td>bool</td><td>Si</td><td>Canale B2C</td></tr>
+    <tr><td>Active</td><td>bool</td><td>Si</td><td>Stato logico</td></tr>
+    <tr><td>CreatedAt</td><td>datetime</td><td>Si</td><td>Data creazione</td></tr>
+  </table>
+
+  <h3>15.2 Supplier</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>Name</td><td>string</td><td>Si</td><td>Ragione sociale</td></tr>
+    <tr><td>VatNumber</td><td>string</td><td>No</td><td>Partita IVA / CF</td></tr>
+    <tr><td>Address</td><td>string</td><td>No</td><td>Sede</td></tr>
+    <tr><td>Email</td><td>string</td><td>No</td><td>Contatto</td></tr>
+    <tr><td>Phone</td><td>string</td><td>No</td><td>Contatto</td></tr>
+    <tr><td>Status</td><td>enum</td><td>Si</td><td>active/suspended/archived</td></tr>
+  </table>
+
+  <h3>15.3 Certification</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>SupplierId</td><td>FK</td><td>Si</td><td>Fornitore</td></tr>
+    <tr><td>Type</td><td>string/enum</td><td>Si</td><td>BIO o altra</td></tr>
+    <tr><td>Authority</td><td>string</td><td>Si</td><td>Ente certificatore</td></tr>
+    <tr><td>IssueDate</td><td>date</td><td>No</td><td>Data rilascio</td></tr>
+    <tr><td>ExpiryDate</td><td>date</td><td>Si</td><td>Data scadenza</td></tr>
+    <tr><td>Status</td><td>enum</td><td>Si</td><td>valid/expired/revoked</td></tr>
+  </table>
+
+  <h3>15.4 Customer</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>Type</td><td>enum</td><td>Si</td><td>B2B/B2C</td></tr>
+    <tr><td>Name</td><td>string</td><td>Si</td><td>Nome o ragione sociale</td></tr>
+    <tr><td>VatNumber</td><td>string</td><td>No</td><td>Prevalente B2B</td></tr>
+    <tr><td>Email</td><td>string</td><td>Si</td><td>Contatto</td></tr>
+    <tr><td>Status</td><td>enum</td><td>Si</td><td>active/blocked/archived</td></tr>
+  </table>
+
+  <h3>15.5 CustomerAddress</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>CustomerId</td><td>FK</td><td>Si</td><td>FK Customers</td></tr>
+    <tr><td>AddressType</td><td>enum</td><td>Si</td><td>Shipping/Billing/HeadOffice</td></tr>
+    <tr><td>RecipientName</td><td>string</td><td>Si</td><td>Destinatario</td></tr>
+    <tr><td>Street</td><td>string</td><td>Si</td><td>Indirizzo principale</td></tr>
+    <tr><td>Street2</td><td>string</td><td>No</td><td>Interno, piano, riferimento</td></tr>
+    <tr><td>City</td><td>string</td><td>Si</td><td>Città</td></tr>
+    <tr><td>PostalCode</td><td>string</td><td>Si</td><td>CAP</td></tr>
+    <tr><td>Province</td><td>string</td><td>Si</td><td>Provincia</td></tr>
+    <tr><td>Country</td><td>string</td><td>Si</td><td>Nazione</td></tr>
+    <tr><td>IsDefault</td><td>bool</td><td>Si</td><td>Default per il tipo</td></tr>
+    <tr><td>CreatedAt</td><td>datetime</td><td>Si</td><td>Data creazione</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime</td><td>Si</td><td>Ultima modifica</td></tr>
+  </table>
+
+  <h3>15.6 Batch</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>BatchCode</td><td>string</td><td>Si</td><td>Univoco</td></tr>
+    <tr><td>ProductId</td><td>FK</td><td>Si</td><td>Prodotto</td></tr>
+    <tr><td>BatchType</td><td>enum</td><td>Si</td><td>raw/process/packed</td></tr>
+    <tr><td>Status</td><td>enum</td><td>Si</td><td>creato/in_verifica/conforme/bloccato/esaurito/archiviato</td></tr>
+    <tr><td>BioFlag</td><td>bool</td><td>Si</td><td>Proprieta del lotto</td></tr>
+    <tr><td>SupplierId</td><td>FK</td><td>No</td><td>Tipico per raw batch</td></tr>
+    <tr><td>ProductionDate</td><td>date</td><td>No</td><td>Produzione o ricezione</td></tr>
+    <tr><td>ExpirationDate</td><td>date</td><td>No</td><td>Scadenza/TMC</td></tr>
+    <tr><td>CreatedAt</td><td>datetime</td><td>Si</td><td>Creazione record</td></tr>
+  </table>
+
+  <h3>15.7 BatchLink</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>ParentBatchId</td><td>FK</td><td>Si</td><td>Lotto sorgente</td></tr>
+    <tr><td>ChildBatchId</td><td>FK</td><td>Si</td><td>Lotto risultante</td></tr>
+    <tr><td>QuantityUsed</td><td>decimal</td><td>Si</td><td>Quantita usata</td></tr>
+    <tr><td>UnitOfMeasure</td><td>string</td><td>Si</td><td>Unita di misura</td></tr>
+    <tr><td>CreatedAt</td><td>datetime</td><td>Si</td><td>Data relazione</td></tr>
+  </table>
+
+  <h3>15.8 InventoryMovement</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>ProductId</td><td>FK</td><td>Si</td><td>Prodotto</td></tr>
+    <tr><td>BatchId</td><td>FK</td><td>Si</td><td>Lotto</td></tr>
+    <tr><td>MovementType</td><td>enum</td><td>Si</td><td>load/unload/waste/reserve/release/return/transfer</td></tr>
+    <tr><td>Quantity</td><td>decimal</td><td>Si</td><td>Quantita movimentata</td></tr>
+    <tr><td>MovementDate</td><td>datetime</td><td>Si</td><td>Data evento</td></tr>
+    <tr><td>Reason</td><td>string</td><td>No</td><td>Causale</td></tr>
+    <tr><td>ReferenceType</td><td>string</td><td>No</td><td>Order/Batch/Manual</td></tr>
+    <tr><td>ReferenceId</td><td>string</td><td>No</td><td>Riferimento</td></tr>
+    <tr><td>UserId</td><td>string</td><td>Si</td><td>Autore</td></tr>
+  </table>
+
+  <h3>15.9 StockReservation</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>OrderId</td><td>FK</td><td>Si</td><td>FK Orders</td></tr>
+    <tr><td>OrderItemId</td><td>FK</td><td>Si</td><td>FK OrderItems</td></tr>
+    <tr><td>ProductId</td><td>FK</td><td>Si</td><td>FK Products</td></tr>
+    <tr><td>BatchId</td><td>FK</td><td>No</td><td>FK Batches, se assegnata a lotto specifico</td></tr>
+    <tr><td>Quantity</td><td>decimal</td><td>Si</td><td>Quantità riservata</td></tr>
+    <tr><td>Status</td><td>enum</td><td>Si</td><td>Active/Released/Consumed/Expired/Cancelled</td></tr>
+    <tr><td>ReservationType</td><td>enum</td><td>Si</td><td>Checkout/Manual/PreAllocation</td></tr>
+    <tr><td>ExpiresAt</td><td>datetime</td><td>No</td><td>Scadenza riserva</td></tr>
+    <tr><td>CreatedAt</td><td>datetime</td><td>Si</td><td>Creazione</td></tr>
+    <tr><td>UpdatedAt</td><td>datetime</td><td>Si</td><td>Ultima modifica</td></tr>
+    <tr><td>ReleasedAt</td><td>datetime</td><td>No</td><td>Rilascio riserva</td></tr>
+    <tr><td>ConsumedAt</td><td>datetime</td><td>No</td><td>Consumo riserva</td></tr>
+    <tr><td>Notes</td><td>string</td><td>No</td><td>Note tecniche o operative</td></tr>
+  </table>
+
+  <h3>15.10 QualityCheck</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>BatchId</td><td>FK</td><td>Si</td><td>Lotto</td></tr>
+    <tr><td>ChecklistVersion</td><td>string</td><td>Si</td><td>Versione checklist</td></tr>
+    <tr><td>Result</td><td>enum</td><td>Si</td><td>ok/warning/ko</td></tr>
+    <tr><td>CheckedAt</td><td>datetime</td><td>Si</td><td>Data controllo</td></tr>
+    <tr><td>CheckedBy</td><td>string</td><td>Si</td><td>Utente</td></tr>
+    <tr><td>Notes</td><td>string</td><td>No</td><td>Note</td></tr>
+  </table>
+
+  <h3>15.11 NonConformity</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>BatchId</td><td>FK</td><td>Si</td><td>Lotto</td></tr>
+    <tr><td>Severity</td><td>enum</td><td>Si</td><td>low/medium/high/critical</td></tr>
+    <tr><td>Status</td><td>enum</td><td>Si</td><td>aperta/in_analisi/in_risoluzione/chiusa</td></tr>
+    <tr><td>Description</td><td>string</td><td>Si</td><td>Descrizione problema</td></tr>
+    <tr><td>CorrectiveAction</td><td>string</td><td>No</td><td>Azione correttiva</td></tr>
+    <tr><td>OpenedBy</td><td>string</td><td>Si</td><td>Utente apertura</td></tr>
+    <tr><td>OpenedAt</td><td>datetime</td><td>Si</td><td>Data apertura</td></tr>
+    <tr><td>ClosedBy</td><td>string</td><td>No</td><td>Utente chiusura</td></tr>
+    <tr><td>ClosedAt</td><td>datetime</td><td>No</td><td>Data chiusura</td></tr>
+  </table>
+
+  <h3>15.12 Order</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>CustomerId</td><td>FK</td><td>Si</td><td>Cliente</td></tr>
+    <tr><td>OrderType</td><td>enum</td><td>Si</td><td>B2C/B2B</td></tr>
+    <tr><td>Status</td><td>enum</td><td>Si</td><td>creato/in_attesa_pagamento/pagato/in_preparazione/spedito/chiuso/annullato/fallito</td></tr>
+    <tr><td>PaymentStatus</td><td>enum</td><td>No</td><td>pending/paid/failed/refunded</td></tr>
+    <tr><td>TotalAmount</td><td>decimal</td><td>Si</td><td>Totale ordine</td></tr>
+    <tr><td>Currency</td><td>string</td><td>Si</td><td>Valuta</td></tr>
+    <tr><td>CreatedAt</td><td>datetime</td><td>Si</td><td>Creazione ordine</td></tr>
+  </table>
+
+  <h3>15.13 OrderItem</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>OrderId</td><td>FK</td><td>Si</td><td>Ordine</td></tr>
+    <tr><td>ProductId</td><td>FK</td><td>Si</td><td>Prodotto</td></tr>
+    <tr><td>Quantity</td><td>decimal</td><td>Si</td><td>Quantita ordinata</td></tr>
+    <tr><td>UnitPrice</td><td>decimal</td><td>Si</td><td>Prezzo storicizzato</td></tr>
+    <tr><td>TaxAmount</td><td>decimal</td><td>No</td><td>Imposte</td></tr>
+    <tr><td>ReservedBatchId</td><td>FK</td><td>No</td><td>Lotto riservato, se applicabile</td></tr>
+  </table>
+
+  <h3>15.14 AuditLog</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Obbligatorio</th><th>Note</th></tr>
+    <tr><td>Id</td><td>PK</td><td>Si</td><td>Identificativo</td></tr>
+    <tr><td>EntityName</td><td>string</td><td>Si</td><td>Nome entita</td></tr>
+    <tr><td>EntityId</td><td>string</td><td>Si</td><td>Chiave logica</td></tr>
+    <tr><td>Action</td><td>string</td><td>Si</td><td>create/update/delete/status_change</td></tr>
+    <tr><td>OldValues</td><td>json/string</td><td>No</td><td>Snapshot precedente</td></tr>
+    <tr><td>NewValues</td><td>json/string</td><td>No</td><td>Snapshot successivo</td></tr>
+    <tr><td>ChangedBy</td><td>string</td><td>Si</td><td>Utente autore</td></tr>
+    <tr><td>ChangedAt</td><td>datetime</td><td>Si</td><td>Data</td></tr>
+    <tr><td>CorrelationId</td><td>string</td><td>No</td><td>Collegamento tecnico</td></tr>
+  </table>
+
+  <h2>16. Relazioni, cardinalita e vincoli</h2>
+  <table>
+    <tr><th>Relazione</th><th>Cardinalita</th><th>Note</th></tr>
+    <tr><td>Customer -> CustomerAddress</td><td>1:N</td><td>Un cliente può avere più indirizzi</td></tr>
+    <tr><td>Product -> Batch</td><td>1:N</td><td>Un prodotto puo avere molti lotti</td></tr>
+    <tr><td>Supplier -> Certification</td><td>1:N</td><td>Certificazioni nel tempo</td></tr>
+    <tr><td>Supplier -> Batch</td><td>1:N</td><td>Tipica relazione dei raw batch</td></tr>
+    <tr><td>Batch -> BatchLink (parent)</td><td>1:N</td><td>Un lotto sorgente puo avere piu figli</td></tr>
+    <tr><td>Batch -> BatchLink (child)</td><td>1:N</td><td>Un lotto figlio puo avere piu padri</td></tr>
+    <tr><td>Batch -> InventoryMovement</td><td>1:N</td><td>Molti movimenti nel ciclo di vita</td></tr>
+    <tr><td>Order -> StockReservation</td><td>1:N</td><td>Un ordine può avere più riserve</td></tr>
+    <tr><td>OrderItem -> StockReservation</td><td>1:N</td><td>Una riga può avere una o più riserve</td></tr>
+    <tr><td>Batch -> QualityCheck</td><td>1:N</td><td>Molti controlli nel tempo</td></tr>
+    <tr><td>Batch -> NonConformity</td><td>1:N</td><td>Una o piu NC</td></tr>
+    <tr><td>Customer -> Order</td><td>1:N</td><td>Molti ordini per cliente</td></tr>
+    <tr><td>Order -> OrderItem</td><td>1:N</td><td>Righe ordine</td></tr>
+  </table>
+
+  <div class="warn">
+    <p><strong>Vincolo fondamentale del dominio</strong></p>
+    <p>Per Stella Frutta il semplice <code>ParentBatchId</code> non basta. Un processo reale puo usare piu lotti input e generare piu lotti output. La modellazione della genealogia con tabella dedicata e obbligatoria.</p>
+  </div>
+
+  <h2>17. Regole di business</h2>
+  <ol>
+    <li>Il Core e l'unica fonte di verita per prodotti, lotti, stock, qualita e ordini.</li>
+    <li>Il frontend non puo derivare disponibilita proprie senza passare dal backend.</li>
+    <li>Il flag BIO e sempre associato al lotto.</li>
+    <li>Un lotto bloccato non puo essere lavorato, confezionato o venduto.</li>
+    <li>Ogni movimento di stock deve essere tracciato per prodotto, lotto, tipo, quantita, utente e data.</li>
+    <li>Ogni operazione critica deve produrre audit trail nel Core.</li>
+    <li>I dati esposti via QR devono essere sanitizzati.</li>
+    <li>Le checklist qualita devono supportare versione e storicita.</li>
+    <li>I prezzi applicati agli ordini devono essere storicizzati sulle righe.</li>
+    <li>Le certificazioni BIO devono risultare valide rispetto alla data di uso del lotto.</li>
+    <li>La giacenza derivata dai movimenti e la base della disponibilita.</li>
+    <li>La riserva stock deve poter essere rilasciata in caso di ordine fallito o annullato.</li>
+    <li>Gli indirizzi cliente sono gestiti in tabella separata per supportare scenari B2C e B2B con più recapiti.</li>
+    <li>Le riserve stock sono entità dedicate e non semplici movimenti di magazzino.</li>
+  </ol>
+
+  <h2>18. Stati e transizioni</h2>
+  <h3>18.1 Lotto</h3>
+  <p>Stati: <code>creato</code>, <code>in_verifica</code>, <code>conforme</code>, <code>bloccato</code>, <code>esaurito</code>, <code>archiviato</code>.</p>
+  <p>Transizioni principali: <code>creato -> in_verifica</code>, <code>in_verifica -> conforme</code>, <code>in_verifica -> bloccato</code>, <code>bloccato -> conforme</code>, <code>conforme -> esaurito</code>, <code>esaurito -> archiviato</code>.</p>
+
+  <h3>18.2 Ordine</h3>
+  <p>Stati: <code>creato</code>, <code>in_attesa_pagamento</code>, <code>pagato</code>, <code>in_preparazione</code>, <code>spedito</code>, <code>chiuso</code>, <code>annullato</code>, <code>fallito</code>.</p>
+
+  <h3>18.3 Non conformita</h3>
+  <p>Stati: <code>aperta</code>, <code>in_analisi</code>, <code>in_risoluzione</code>, <code>chiusa</code>.</p>
+
+  <h2>19. Use case modulo per modulo</h2>
+  <h3>19.1 Products</h3>
+  <h4>UC-PROD-01 - Creazione prodotto</h4>
+  <ol>
+    <li>L'utente apre la funzione di creazione.</li>
+    <li>Inserisce SKU, nome, unita di misura, canali e attributi base.</li>
+    <li>Il sistema valida l'univocita SKU.</li>
+    <li>Il sistema salva il prodotto.</li>
+    <li>Il sistema registra audit.</li>
+  </ol>
+  <h4>UC-PROD-02 - Modifica prodotto</h4>
+  <p>Il prodotto puo essere aggiornato, ma non eliminato fisicamente se gia usato da lotti o ordini.</p>
+
+  <h3>19.2 Suppliers</h3>
+  <h4>UC-SUP-01 - Registrazione fornitore</h4>
+  <ol>
+    <li>L'utente inserisce anagrafica e contatti.</li>
+    <li>Il sistema salva il fornitore.</li>
+    <li>Possono essere associati documenti e certificazioni.</li>
+  </ol>
+  <h4>UC-SUP-02 - Inserimento certificazione</h4>
+  <ol>
+    <li>L'utente seleziona il fornitore.</li>
+    <li>Inserisce tipo, autorita e scadenza.</li>
+    <li>Il sistema salva la certificazione e ne calcola lo stato.</li>
+  </ol>
+
+  <h3>19.3 Batches</h3>
+  <h4>UC-BAT-01 - Creazione raw batch</h4>
+  <ol>
+    <li>L'operatore registra ingresso materia prima.</li>
+    <li>Seleziona fornitore e prodotto.</li>
+    <li>Inserisce quantita e metadati.</li>
+    <li>Il sistema crea il lotto.</li>
+    <li>Il sistema crea il movimento di carico.</li>
+  </ol>
+  <h4>UC-BAT-02 - Creazione process batch</h4>
+  <ol>
+    <li>L'operatore seleziona i lotti in ingresso.</li>
+    <li>Inserisce consumi e parametri.</li>
+    <li>Il sistema verifica disponibilita e compatibilita.</li>
+    <li>Il sistema crea il lotto di processo.</li>
+    <li>Il sistema crea i record <code>BatchLink</code>.</li>
+    <li>Il sistema aggiorna i movimenti di magazzino.</li>
+  </ol>
+  <h4>UC-BAT-03 - Creazione packed batch</h4>
+  <ol>
+    <li>L'operatore seleziona il lotto di processo.</li>
+    <li>Inserisce dati di confezionamento.</li>
+    <li>Il sistema crea il lotto confezionato, genera QR e aggiorna la disponibilita.</li>
+  </ol>
+  <h4>UC-BAT-04 - Blocco lotto</h4>
+  <p>Il ruolo qualita o admin puo bloccare un lotto per impedirne l'uso successivo.</p>
+
+  <h3>19.4 Inventory</h3>
+  <h4>UC-INV-01 - Carico</h4>
+  <p>Registra incremento di stock da ingresso o da processo.</p>
+  <h4>UC-INV-02 - Scarico</h4>
+  <p>Registra decremento da produzione o evasione.</p>
+  <h4>UC-INV-03 - Riserva stock</h4>
+  <p>Allocazione logica di disponibilita per ordini.</p>
+  <h4>UC-INV-04 - Rilascio riserva</h4>
+  <p>Annulla riserva in caso di fallimento o annullamento ordine.</p>
+  <h4>UC-INV-05 - Scarto</h4>
+  <p>Riduce giacenza per perdita o difettosita.</p>
+
+  <h3>19.5 Quality</h3>
+  <h4>UC-QUA-01 - Registrazione controllo qualita</h4>
+  <ol>
+    <li>L'utente qualita seleziona un lotto.</li>
+    <li>Il sistema propone checklist.</li>
+    <li>Viene salvato l'esito.</li>
+    <li>Se necessario, il lotto viene bloccato.</li>
+  </ol>
+  <h4>UC-QUA-02 - Apertura non conformita</h4>
+  <p>Il sistema crea la NC associata al lotto e ne tiene lo stato.</p>
+  <h4>UC-QUA-03 - Chiusura non conformita</h4>
+  <p>La chiusura richiede motivazione e utente responsabile.</p>
+
+  <h3>19.6 Orders</h3>
+  <h4>UC-ORD-01 - Creazione ordine B2C</h4>
+  <ol>
+    <li>Il backend valida i dati di checkout.</li>
+    <li>Crea ordine e righe.</li>
+    <li>Registra la riserva stock.</li>
+    <li>Avvia il pagamento esterno.</li>
+  </ol>
+  <h4>UC-ORD-02 - Conferma pagamento</h4>
+  <p>L'ordine passa a pagato solo tramite conferma verificata lato backend.</p>
+  <h4>UC-ORD-03 - Preparazione ordine</h4>
+  <p>Magazzino seleziona l'ordine e ne avvia il picking/preparazione.</p>
+  <h4>UC-ORD-04 - Spedizione e chiusura</h4>
+  <p>L'ordine viene marcato spedito e successivamente chiuso.</p>
+
+  <h3>19.7 Traceability</h3>
+  <h4>UC-TRA-01 - Consultazione genealogia</h4>
+  <p>Consultazione interna dei legami tra lotti a monte e a valle.</p>
+  <h4>UC-TRA-02 - Consultazione QR pubblico</h4>
+  <p>Espone solo dati safe, mai informazioni sensibili interne.</p>
+
+  <h2>20. API iniziali del Core</h2>
+  <h3>20.1 Products</h3>
+  <ul>
+    <li><code>GET /api/products</code></li>
+    <li><code>GET /api/products/{id}</code></li>
+    <li><code>POST /api/products</code></li>
+    <li><code>PUT /api/products/{id}</code></li>
+  </ul>
+  <h3>20.2 Suppliers</h3>
+  <ul>
+    <li><code>GET /api/suppliers</code></li>
+    <li><code>POST /api/suppliers</code></li>
+    <li><code>POST /api/suppliers/{id}/certifications</code></li>
+  </ul>
+  <h3>20.3 Batches</h3>
+  <ul>
+    <li><code>POST /api/batches/raw</code></li>
+    <li><code>POST /api/batches/process</code></li>
+    <li><code>POST /api/batches/packed</code></li>
+    <li><code>GET /api/batches/{id}</code></li>
+    <li><code>GET /api/batches/{id}/genealogy</code></li>
+    <li><code>POST /api/batches/{id}/block</code></li>
+    <li><code>POST /api/batches/{id}/unblock</code></li>
+  </ul>
+  <h3>20.4 Inventory</h3>
+  <ul>
+    <li><code>GET /api/stock</code></li>
+    <li><code>POST /api/inventory/load</code></li>
+    <li><code>POST /api/inventory/unload</code></li>
+    <li><code>POST /api/inventory/waste</code></li>
+    <li><code>POST /api/inventory/reserve</code></li>
+    <li><code>POST /api/inventory/release</code></li>
+  </ul>
+  <h3>20.5 Quality</h3>
+  <ul>
+    <li><code>POST /api/quality/checks</code></li>
+    <li><code>POST /api/quality/nonconformities</code></li>
+    <li><code>POST /api/quality/nonconformities/{id}/close</code></li>
+  </ul>
+  <h3>20.6 Orders</h3>
+  <ul>
+    <li><code>POST /api/orders</code></li>
+    <li><code>GET /api/orders/{id}</code></li>
+    <li><code>POST /api/orders/{id}/prepare</code></li>
+    <li><code>POST /api/orders/{id}/ship</code></li>
+    <li><code>POST /api/orders/{id}/cancel</code></li>
+  </ul>
+  <h3>20.7 Traceability</h3>
+  <ul>
+    <li><code>GET /api/trace/{lotCode}</code></li>
+  </ul>
+
+  <h2>21. Contratti API iniziali</h2>
+  <h3>21.1 POST /api/products</h3>
+  <p><strong>Scopo:</strong> crea un prodotto.</p>
+  <p><strong>Input minimo:</strong> SKU, nome, unita di misura, canali.</p>
+  <p><strong>Output:</strong> id prodotto creato.</p>
+  <p><strong>Errori:</strong> 400 validazione, 409 SKU duplicato, 403 autorizzazione.</p>
+  <p><strong>Side effects:</strong> audit create product.</p>
+
+  <h3>21.2 POST /api/batches/raw</h3>
+  <p><strong>Scopo:</strong> registra un lotto materia prima.</p>
+  <p><strong>Input minimo:</strong> fornitore, prodotto, quantita, batch metadata.</p>
+  <p><strong>Output:</strong> id lotto e codice lotto.</p>
+  <p><strong>Errori:</strong> 400 dati mancanti, 404 fornitore/prodotto non trovato, 403 non autorizzato.</p>
+  <p><strong>Side effects:</strong> creazione batch, movimento di carico, audit.</p>
+
+  <h3>21.3 POST /api/batches/process</h3>
+  <p><strong>Scopo:</strong> registra una trasformazione.</p>
+  <p><strong>Input minimo:</strong> lotti input, quantita consumate, dati output.</p>
+  <p><strong>Output:</strong> id lotto di processo.</p>
+  <p><strong>Errori:</strong> 400 input non valido, 409 stock insufficiente, 422 incompatibilita BIO/stato lotti.</p>
+  <p><strong>Side effects:</strong> batch output, link genealogia, movimenti, audit.</p>
+
+  <h3>21.4 POST /api/orders</h3>
+  <p><strong>Scopo:</strong> crea un ordine.</p>
+  <p><strong>Input minimo:</strong> cliente, righe, indirizzi, eventuale metodo pagamento.</p>
+  <p><strong>Output:</strong> id ordine, stato iniziale, totale.</p>
+  <p><strong>Errori:</strong> 400 validazione, 409 stock insufficiente, 403 operazione non consentita.</p>
+  <p><strong>Side effects:</strong> creazione ordine, riserva stock, audit.</p>
+
+  <h3>21.5 POST /api/quality/checks</h3>
+  <p><strong>Scopo:</strong> registra un controllo qualita.</p>
+  <p><strong>Input minimo:</strong> lotto, checklist version, esito, note.</p>
+  <p><strong>Output:</strong> id controllo.</p>
+  <p><strong>Side effects:</strong> eventuale blocco lotto e audit.</p>
+
+  <h2>22. Requisiti minimi per tutti gli endpoint</h2>
+  <ul>
+    <li>validazione input strutturata</li>
+    <li>gestione errori standard</li>
+    <li>controllo autorizzazioni per ruolo</li>
+    <li>correlation id disponibile nel contesto richiesta</li>
+    <li>audit per operazioni sensibili</li>
+    <li>trace tecnico verso monitor</li>
+  </ul>
+
+  <h2>23. Audit, logging e monitoring</h2>
+  <h3>23.1 Audit funzionale</h3>
+  <p>Le operazioni seguenti devono produrre audit persistente nel Core:</p>
+  <ul>
+    <li>creazione e modifica lotti</li>
+    <li>cambio stato lotto</li>
+    <li>rettifiche di stock</li>
+    <li>controlli qualita e non conformita</li>
+    <li>creazione ordini e cambi stato ordine</li>
+    <li>modifiche a certificazioni e anagrafiche sensibili</li>
+  </ul>
+
+  <h3>23.2 Logging tecnico</h3>
+  <p>Il logging tecnico registra errori, warning, eventi applicativi e informazioni diagnostiche. Deve essere inviato al monitor esterno in modo asincrono.</p>
+
+  <h3>23.3 Trace tecnico</h3>
+  <p>Il trace tecnico registra almeno metodo, path, status code, elapsed time, correlation id e metadati contestuali.</p>
+
+  <h3>23.4 Query logging</h3>
+  <p>Le query lente o significative possono essere tracciate con finalita prestazionali e diagnostiche.</p>
+
+  <h2>24. Sicurezza</h2>
+  <ul>
+    <li>autenticazione JWT o provider esterno</li>
+    <li>autorizzazione per ruolo e area funzionale</li>
+    <li>separazione netta dati pubblici/interni</li>
+    <li>gestione segreti fuori dal codice</li>
+    <li>protezione degli endpoint di integrazione con provider esterni</li>
+    <li>protezione dai replay o doppie notifiche per callback critiche</li>
+  </ul>
+
+  <h2>25. Requisiti non funzionali</h2>
+  <ul>
+    <li>coerenza transazionale del Core per operazioni composite.</li>
+    <li>tracciabilita completa dei lotti a monte e a valle.</li>
+    <li>logging tecnico non bloccante.</li>
+    <li>backup e restore verificabili.</li>
+    <li>struttura modulare per estrazioni future.</li>
+    <li>monitor esterno non accoppiato alla persistenza business.</li>
+  </ul>
+
+  <h2>26. Casi limite ed eccezioni</h2>
+  <ul>
+    <li>certificazione BIO scaduta al momento dell'uso del lotto</li>
+    <li>lotti con documentazione incompleta</li>
+    <li>tentativo di lavorazione con stock insufficiente</li>
+    <li>tentativo di miscelazione BIO/non BIO non consentita</li>
+    <li>ordine pagato con lotto successivamente bloccato</li>
+    <li>rettifica manuale di stock</li>
+    <li>messaggi monitor duplicati</li>
+    <li>modifica prodotto con storico ordini/lotti gia esistente</li>
+  </ul>
+
+  <h2>27. Acceptance criteria ad alto livello</h2>
+  <ul>
+    <li>Ogni ingresso materia prima genera lotto e movimento coerenti.</li>
+    <li>Ogni trasformazione crea relazioni genealogiche corrette.</li>
+    <li>Ogni operazione sensibile produce audit.</li>
+    <li>Un lotto bloccato non risulta disponibile a lavorazione o vendita.</li>
+    <li>Il monitor riceve i messaggi tecnici senza accoppiare il Core al database tecnico.</li>
+    <li>Le API principali restituiscono errori coerenti e validazioni chiare.</li>
+  </ul>
+
+  <h2>28. Decisioni aperte</h2>
+  <ul>
+    <li>dettaglio del perimetro B2B nella prima release</li>
+    <li>strategia esatta di assegnazione lotto alle righe ordine</li>
+    <li>magazzino singolo o multi-magazzino</li>
+    <li>struttura e granularita delle checklist qualita</li>
+    <li>politica di timeout e rilascio riserve per checkout B2C</li>
+  </ul>
+
+  <h2>29. Roadmap tecnica consigliata</h2>
+  <ol>
+    <li>Tradurre questo modello in ER dettagliato e migrazioni database.</li>
+    <li>Definire gli endpoint con request/response JSON precisi.</li>
+    <li>Impostare <code>StellaFrutta.Shared</code>.</li>
+    <li>Integrare audit e observability in <code>Mandorle.Api</code>.</li>
+    <li>Ricreare/adattare <code>StellaFrutta.Monitoring.Api</code>.</li>
+    <li>Implementare i moduli Core nell'ordine: Products, Suppliers, Batches, Inventory, Quality, Orders, Traceability.</li>
+  </ol>
+
+  <p class="muted">Fine specifica completa.</p>
+</body>
+</html>

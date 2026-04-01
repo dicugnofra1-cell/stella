@@ -1,4 +1,4 @@
-﻿using Mandorle.Application.Commands;
+﻿using Mandorle.Application.Products.Commands.CreateProduct;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

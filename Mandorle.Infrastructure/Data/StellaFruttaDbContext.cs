@@ -127,7 +127,9 @@ public partial class StellaFruttaDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())", "DF_Customers_CreatedAt");
             entity.Property(e => e.Email).HasMaxLength(150);
             entity.Property(e => e.Name).HasMaxLength(200);
+            entity.Property(e => e.Pec).HasMaxLength(150);
             entity.Property(e => e.Phone).HasMaxLength(50);
+            entity.Property(e => e.SpidIdentifier).HasMaxLength(100);
             entity.Property(e => e.Status).HasMaxLength(30);
             entity.Property(e => e.Type).HasMaxLength(20);
             entity.Property(e => e.VatNumber).HasMaxLength(30);

@@ -15,6 +15,10 @@ public partial class Customer
 
     public string Email { get; set; } = null!;
 
+    public string? Pec { get; set; }
+
+    public string? SpidIdentifier { get; set; }
+
     public string? Phone { get; set; }
 
     public string Status { get; set; } = null!;

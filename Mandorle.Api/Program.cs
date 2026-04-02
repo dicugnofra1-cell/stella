@@ -18,6 +18,20 @@ builder.Services.AddDbContext<StellaFruttaDbContext>(options =>
 builder.Services.AddMediatR(configuration =>
     configuration.RegisterServicesFromAssembly(typeof(AssemblyReference).Assembly));
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+builder.Services.AddScoped<IBatchRepository, BatchRepository>();
+builder.Services.AddScoped<IBatchLinkRepository, BatchLinkRepository>();
+builder.Services.AddScoped<IInventoryMovementRepository, InventoryMovementRepository>();
+builder.Services.AddScoped<INonConformityRepository, NonConformityRepository>();
+builder.Services.AddScoped<IPublicTraceViewRepository, PublicTraceViewRepository>();
+builder.Services.AddScoped<IQualityCheckRepository, QualityCheckRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
+builder.Services.AddScoped<ICertificationRepository, CertificationRepository>();
+builder.Services.AddScoped<ISupplierDocumentRepository, SupplierDocumentRepository>();
+builder.Services.AddScoped<IStockReservationRepository, StockReservationRepository>();
 
 var app = builder.Build();
 

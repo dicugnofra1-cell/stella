@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stella - Mandorle pugliesi</title>
+  <style>
+    :root{
+      --paper:#f7f3ec;
+      --milk:#fffcf6;
+      --ink:#1d1a16;
+      --soft:#756f67;
+      --line:#ded5c8;
+      --field:#516044;
+      --clay:#ad8a63;
+      --deep:#191f18;
+      --mist:rgba(255,252,246,.82);
+      --shadow:0 28px 80px rgba(29,26,22,.14);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:"Segoe UI",Arial,sans-serif}
+    body.en [data-lang="it"],body.it [data-lang="en"]{display:none!important}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    a{color:inherit;text-decoration:none}
+    img{display:block;max-width:100%}
+
+    .topbar{position:fixed;inset:0 0 auto;z-index:30;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:22px 42px;color:#fff;transition:.2s ease}
+    .topbar:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,21,18,.58),rgba(20,21,18,0));z-index:-1}
+    .nav-left,.nav-right{display:flex;align-items:center;gap:22px}
+    .nav-right{justify-content:flex-end}
+    .brand{font-family:Georgia,serif;font-size:28px;letter-spacing:.22em;text-transform:uppercase}
+    .nav-link,.lang-btn,.cart-btn{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+    .nav-link{opacity:.88}
+    .nav-link:hover{opacity:1}
+    .lang{display:flex;border:1px solid rgba(255,255,255,.54)}
+    .lang-btn{border:0;background:transparent;color:#fff;padding:9px 11px}
+    .lang-btn.active{background:#fff;color:var(--ink)}
+    .cart-btn{display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.54);background:transparent;color:#fff;padding:10px 13px}
+    .cart-count{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#fff;color:var(--ink);font-size:12px}
+
+    .hero{min-height:96vh;display:grid;align-items:end;color:#fff;background:linear-gradient(180deg,rgba(15,17,13,.08),rgba(15,17,13,.72)),url("assets/stella/images/company/mandorleto-filari-01.jpeg") center/cover}
+    .hero-inner{width:min(1220px,calc(100% - 48px));margin:0 auto;padding:160px 0 74px}
+    .kicker{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:800;color:inherit}
+    .hero h1{max-width:940px;margin:18px 0 24px;font-family:Georgia,serif;font-size:clamp(54px,10vw,132px);font-weight:400;line-height:.9;letter-spacing:-.02em}
+    .hero p{max-width:610px;margin:0;color:rgba(255,255,255,.82);font-size:18px;line-height:1.72}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+    .btn{min-height:46px;border:1px solid var(--line);background:var(--milk);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;padding:13px 20px;font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:.18s ease}
+    .btn:hover{transform:translateY(-2px)}
+    .btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+    .btn.ghost{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.58);color:#fff}
+    .btn.slim{min-height:40px;padding:10px 13px;font-size:11px}
+
+    .quick-facts{width:min(1220px,calc(100% - 48px));margin:-38px auto 0;position:relative;z-index:3;display:grid;grid-template-columns:1.1fr .9fr .9fr .9fr;background:var(--milk);border:1px solid var(--line);box-shadow:var(--shadow)}
+    .fact{padding:24px;border-right:1px solid var(--line)}
+    .fact:last-child{border-right:0}
+    .fact span{display:block;color:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:800;margin-bottom:8px}
+    .fact strong{font-family:Georgia,serif;font-size:28px;font-weight:400;line-height:1}
+
+    .section{width:min(1220px,calc(100% - 48px));margin:0 auto;padding:112px 0}
+    .section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,460px);gap:64px;align-items:end;margin-bottom:44px}
+    h2{font-family:Georgia,serif;font-size:clamp(42px,5.6vw,78px);font-weight:400;line-height:.95;letter-spacing:-.015em;margin:0}
+    .section-copy{margin:0;color:var(--soft);font-size:17px;line-height:1.78}
+
+    .split{display:grid;grid-template-columns:.95fr 1.05fr;gap:28px;align-items:stretch}
+    .portrait{min-height:590px;background:linear-gradient(180deg,rgba(20,23,18,0),rgba(20,23,18,.16)),url("assets/stella/images/company/mandorleto-filari-02.jpeg") center/cover}
+    .quiet-card{background:var(--milk);border:1px solid var(--line);padding:46px;display:flex;flex-direction:column;justify-content:flex-end}
+    .quiet-card p{margin:0 0 28px;color:var(--soft);font-size:20px;line-height:1.8}
+    .principles{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line)}
+    .principle{padding:22px;border-right:1px solid var(--line);background:var(--paper)}
+    .principle:last-child{border-right:0}
+    .principle strong{display:block;font-family:Georgia,serif;font-size:32px;font-weight:400;margin-bottom:10px}
+    .principle span{color:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:800}
+
+    .trace-panel{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);background:var(--milk)}
+    .trace-copy{padding:52px;display:flex;flex-direction:column;justify-content:center}
+    .trace-copy h2{font-size:clamp(40px,5vw,68px)}
+    .trace-copy p{margin-top:22px}
+    .qr-card{background:var(--deep);color:#fff;padding:44px;display:grid;align-content:center;gap:28px}
+    .qr-top{display:flex;gap:28px;align-items:center}
+    .qr{width:148px;height:148px;background:#fff;padding:15px;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(6,1fr);gap:6px;flex:0 0 auto}
+    .qr i{background:#1d1a16;display:block}
+    .qr-title h3{font-family:Georgia,serif;font-size:36px;line-height:1;font-weight:400;margin:0 0 10px}
+    .qr-title p{margin:0;color:rgba(255,255,255,.72);line-height:1.6}
+    .trace-list{display:grid;gap:0;border-top:1px solid rgba(255,255,255,.2)}
+    .trace-row{display:flex;justify-content:space-between;gap:20px;padding:15px 0;border-bottom:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7)}
+    .trace-row strong{color:#fff;font-weight:700}
+
+    .selection-tools{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:26px}
+    .filters{display:flex;gap:8px;flex-wrap:wrap}
+    .filter{border:1px solid var(--line);background:transparent;color:var(--ink);padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.15em;font-weight:800}
+    .filter.active{background:var(--ink);border-color:var(--ink);color:#fff}
+    .selection-note{color:var(--soft);font-size:14px;line-height:1.6;max-width:360px;margin:0}
+    .product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    .product{display:grid;grid-template-columns:42% 1fr;background:var(--milk);border:1px solid var(--line);min-height:340px}
+    .product-media{min-height:100%;background:#e6d9c9;overflow:hidden}
+    .product-media img{width:100%;height:100%;object-fit:cover;transition:.35s ease}
+    .product:hover img{transform:scale(1.035)}
+    .product-body{padding:28px;display:flex;flex-direction:column;gap:15px}
+    .tag{width:max-content;background:#ebe3d6;color:var(--soft);padding:7px 9px;font-size:10px;text-transform:uppercase;letter-spacing:.16em;font-weight:900}
+    .product h3{font-family:Georgia,serif;font-size:31px;line-height:1.02;font-weight:400;margin:0}
+    .product p{color:var(--soft);line-height:1.62;margin:0;font-size:14px}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
+    .meta div{border-top:1px solid var(--line);padding-top:9px}
+    .meta span{display:block;color:var(--soft);font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:800;margin-bottom:4px}
+    .meta strong{font-size:13px}
+    .formats{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+    .format{border:1px solid var(--line);background:#fff;padding:9px 10px;text-align:left;min-width:86px}
+    .format strong{display:block;font-size:13px}
+    .format span{display:block;color:var(--soft);font-size:12px;margin-top:3px}
+    .format.active{border-color:var(--ink);background:var(--paper)}
+    .product-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:4px}
+    .price{font-size:22px;font-weight:900;white-space:nowrap}
+    .supply-note{margin-top:18px;padding:22px;border:1px solid var(--line);background:transparent;display:flex;justify-content:space-between;align-items:center;gap:18px}
+    .supply-note p{margin:0;color:var(--soft);line-height:1.6}
+
+    .story-band{background:#ebe5db}
+    .story-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:stretch}
+    .video-tile{min-height:620px;background:linear-gradient(180deg,rgba(16,18,14,.04),rgba(16,18,14,.64)),url("assets/stella/images/company/mandorleto-filari-03.jpeg") center/cover;color:#fff;padding:34px;display:flex;flex-direction:column;justify-content:space-between}
+    .play{width:68px;height:68px;border-radius:50%;border:1px solid rgba(255,255,255,.72);display:grid;place-items:center;font-size:24px;background:rgba(255,255,255,.1)}
+    .video-tile h3{font-family:Georgia,serif;font-size:48px;line-height:.98;font-weight:400;margin:0 0 12px}
+    .video-tile p{max-width:460px;color:rgba(255,255,255,.78);line-height:1.7;margin:0}
+    .article-stack{display:grid;gap:18px}
+    .article{background:var(--milk);border:1px solid var(--line);display:grid;grid-template-columns:148px 1fr;min-height:190px}
+    .article-img{background:center/cover}
+    .article-copy{padding:24px;display:flex;flex-direction:column;gap:10px}
+    .article h3{font-family:Georgia,serif;font-size:28px;font-weight:400;line-height:1.02;margin:0}
+    .article p{margin:0;color:var(--soft);line-height:1.55;font-size:14px}
+    .article a{margin-top:auto;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:900}
+
+    .business-band{background:var(--deep);color:#fff}
+    .business-band .section-copy{color:rgba(255,255,255,.72)}
+    .business-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .business-card{border:1px solid rgba(255,255,255,.2);padding:28px;background:rgba(255,255,255,.04);min-height:230px;display:flex;flex-direction:column;gap:18px}
+    .business-card strong{font-family:Georgia,serif;font-size:34px;font-weight:400}
+    .business-card p{margin:0;color:rgba(255,255,255,.72);line-height:1.65}
+    .business-card .btn{width:max-content;margin-top:auto}
+
+    .contact-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:28px}
+    .contact-card{background:var(--milk);border:1px solid var(--line);padding:36px}
+    .contact-list{display:grid;gap:18px;margin-top:28px}
+    .contact-row{display:grid;grid-template-columns:116px 1fr;gap:18px;padding-top:18px;border-top:1px solid var(--line)}
+    .contact-row:first-child{border-top:0;padding-top:0}
+    .contact-row span{font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:900;color:var(--soft)}
+    .contact-row strong{font-size:18px;line-height:1.45}
+    .map{min-height:520px;background:linear-gradient(135deg,rgba(26,31,24,.82),rgba(26,31,24,.28)),url("assets/stella/images/company/mandorle-dettaglio-03.jpeg") center/cover;color:#fff;padding:34px;display:flex;align-items:end}
+    .map h3{font-family:Georgia,serif;font-size:48px;font-weight:400;line-height:.98;margin:0 0 12px}
+    .map p{margin:0;max-width:420px;color:rgba(255,255,255,.76);line-height:1.7}
+
+    .drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);z-index:60;background:var(--milk);border-left:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(104%);transition:.24s ease;display:flex;flex-direction:column}
+    .drawer.open{transform:translateX(0)}
+    .overlay{position:fixed;inset:0;background:rgba(20,19,17,.42);z-index:50;opacity:0;pointer-events:none;transition:.2s ease}
+    .overlay.open{opacity:1;pointer-events:auto}
+    .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:24px;border-bottom:1px solid var(--line)}
+    .drawer-head h3{font-family:Georgia,serif;font-size:36px;font-weight:400;margin:0}
+    .icon-btn{width:42px;height:42px;border:1px solid var(--line);background:transparent}
+    .drawer-body{padding:8px 24px;overflow:auto;flex:1}
+    .cart-line{display:grid;grid-template-columns:1fr auto;gap:18px;padding:18px 0;border-top:1px solid var(--line)}
+    .cart-line:first-child{border-top:0}
+    .cart-line small{display:block;color:var(--soft);margin-top:6px;line-height:1.45}
+    .drawer-foot{padding:24px;border-top:1px solid var(--line)}
+    .total{display:flex;justify-content:space-between;align-items:center;font-size:22px;font-weight:900;margin-bottom:18px}
+    .business-hint{display:none;border:1px solid var(--line);background:#f1e2cc;padding:14px;margin:12px 0;color:#5b3a17;line-height:1.5}
+    .business-hint.show{display:block}
+    .checkout-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);margin:14px 0}
+    .checkout-tab{border:0;background:transparent;padding:12px;font-weight:900}
+    .checkout-tab.active{background:var(--ink);color:#fff}
+    .checkout-panel{display:none}
+    .checkout-panel.active{display:block}
+    .checkout-form{display:grid;gap:12px;margin-top:18px}
+    input,textarea,select{width:100%;border:1px solid var(--line);background:#fff;padding:13px;color:var(--ink)}
+    textarea{min-height:86px;resize:vertical}
+    .check-row{display:flex;gap:10px;align-items:flex-start;color:var(--soft);font-size:14px;line-height:1.45}
+    .check-row input{width:auto;margin-top:3px}
+    .account-box{border:1px solid var(--line);background:var(--paper);padding:14px;color:var(--soft);line-height:1.55}
+
+    @media (max-width:1060px){
+      .topbar{grid-template-columns:1fr auto;padding:18px 24px}
+      .nav-left{display:none}
+      .brand{text-align:left}
+      .quick-facts,.split,.trace-panel,.story-grid,.contact-grid{grid-template-columns:1fr 1fr}
+      .product{grid-template-columns:1fr}
+      .product-media{min-height:260px}
+      .product-grid{grid-template-columns:1fr 1fr}
+      .business-grid{grid-template-columns:1fr}
+      .section-head{grid-template-columns:1fr}
+    }
+    @media (max-width:720px){
+      .topbar{grid-template-columns:1fr;gap:12px}
+      .nav-right{justify-content:space-between}
+      .nav-right .nav-link{display:none}
+      .hero-inner,.quick-facts,.section{width:min(100% - 32px,1220px)}
+      .hero h1{font-size:clamp(48px,15vw,82px)}
+      .quick-facts,.split,.trace-panel,.story-grid,.product-grid,.business-grid,.contact-grid,.principles{grid-template-columns:1fr}
+      .fact,.principle{border-right:0;border-bottom:1px solid var(--line)}
+      .fact:last-child,.principle:last-child{border-bottom:0}
+      .section{padding:78px 0}
+      .selection-tools,.supply-note{align-items:flex-start;flex-direction:column}
+      .qr-top{align-items:flex-start;flex-direction:column}
+      .portrait,.video-tile,.map{min-height:430px}
+      .article{grid-template-columns:1fr}
+      .article-img{min-height:190px}
+      .contact-row{grid-template-columns:1fr;gap:6px}
+    }
+  </style>
+</head>
+<body class="it">
+  <header class="topbar">
+    <nav class="nav-left">
+      <a class="nav-link" href="#azienda"><span data-lang="it">Azienda</span><span data-lang="en">Company</span></a>
+      <a class="nav-link" href="#tracciabilita"><span data-lang="it">Tracciabilit&agrave;</span><span data-lang="en">Traceability</span></a>
+      <a class="nav-link" href="#prodotti"><span data-lang="it">Selezione</span><span data-lang="en">Selection</span></a>
+      <a class="nav-link" href="#racconti"><span data-lang="it">Racconti</span><span data-lang="en">Stories</span></a>
+      <a class="nav-link" href="#contatti"><span data-lang="it">Contatti</span><span data-lang="en">Contact</span></a>
+    </nav>
+    <a class="brand" href="#">Stella</a>
+    <div class="nav-right">
+      <div class="lang"><button class="lang-btn active" type="button" data-set-lang="it">IT</button><button class="lang-btn" type="button" data-set-lang="en">EN</button></div>
+      <button class="cart-btn" id="openCart" type="button"><span data-lang="it">Carrello</span><span data-lang="en">Cart</span><span class="cart-count" id="cartCount">0</span></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="kicker"><span data-lang="it">Puglia &middot; mandorle tracciabili</span><span data-lang="en">Puglia &middot; traceable almonds</span></div>
+        <h1><span data-lang="it">Mandorle pugliesi, tracciabili fino all&rsquo;origine.</span><span data-lang="en">Puglian almonds, traceable back to origin.</span></h1>
+        <p><span data-lang="it">Dalle nostre terre in Puglia, mandorle coltivate, lavorate e controllate con attenzione. Ogni lotto &egrave; verificabile tramite QR.</span><span data-lang="en">From our land in Puglia, almonds grown, processed and checked with care. Every lot can be verified by QR.</span></p>
+        <div class="hero-actions">
+          <a class="btn dark" href="#prodotti"><span data-lang="it">Selezione</span><span data-lang="en">Selection</span></a>
+          <a class="btn ghost" href="#tracciabilita"><span data-lang="it">Tracciabilit&agrave;</span><span data-lang="en">Traceability</span></a>
+        </div>
+      </div>
+    </section>
+
+    <div class="quick-facts">
+      <div class="fact"><span data-lang="it">Origine</span><span data-lang="en">Origin</span><strong>Puglia</strong></div>
+      <div class="fact"><span data-lang="it">Linea</span><span data-lang="en">Line</span><strong>Stella</strong></div>
+      <div class="fact"><span data-lang="it">Lotti</span><span data-lang="en">Lots</span><strong>QR</strong></div>
+      <div class="fact"><span data-lang="it">Prodotti</span><span data-lang="en">Products</span><strong data-lang="it">5 essenziali</strong><strong data-lang="en">5 essentials</strong></div>
+    </div>
+
+    <section id="azienda" class="section">
+      <div class="section-head">
+        <div><div class="kicker">Stella</div><h2><span data-lang="it">Una casa agricola dedicata alla mandorla.</span><span data-lang="en">A farming house devoted to almonds.</span></h2></div>
+        <p class="section-copy"><span data-lang="it">Poche referenze, lavorate con cura. Una filiera leggibile, dalla terra alla confezione.</span><span data-lang="en">A focused selection, handled with care. A readable chain, from land to pack.</span></p>
+      </div>
+      <div class="split">
+        <div class="portrait"></div>
+        <div class="quiet-card">
+          <p data-lang="it">La Linea Stella nasce dalle nostre terre. Ogni lotto conserva origine, raccolta e lavorazione in modo chiaro.</p>
+          <p data-lang="en">The Stella line comes from our land. Each lot keeps origin, harvest and processing clear.</p>
+          <div class="principles">
+            <div class="principle"><strong>01</strong><span data-lang="it">Origine</span><span data-lang="en">Origin</span></div>
+            <div class="principle"><strong>02</strong><span data-lang="it">Lotto</span><span data-lang="en">Lot</span></div>
+            <div class="principle"><strong>03</strong><span>QR</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tracciabilita" class="section">
+      <div class="trace-panel">
+        <div class="trace-copy">
+          <div class="kicker"><span data-lang="it">Tracciabilit&agrave;</span><span data-lang="en">Traceability</span></div>
+          <h2><span data-lang="it">Ogni prodotto ha il suo lotto.</span><span data-lang="en">Every product has its own lot.</span></h2>
+          <p class="section-copy"><span data-lang="it">Il QR accompagna la confezione e rende consultabili le informazioni essenziali: origine, raccolta, lavorazione e controllo.</span><span data-lang="en">The QR follows each pack and makes the essential details available: origin, harvest, processing and check.</span></p>
+        </div>
+        <div class="qr-card">
+          <div class="qr-top">
+            <div class="qr" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i>
+              <i></i><i></i><i></i><i></i><i></i><i></i>
+              <i></i><i></i><i></i><i></i><i></i><i></i>
+              <i></i><i></i><i></i><i></i><i></i><i></i>
+              <i></i><i></i><i></i><i></i><i></i><i></i>
+              <i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <div class="qr-title">
+              <h3><span data-lang="it">Lotto ST-AL-2604</span><span data-lang="en">Lot ST-AL-2604</span></h3>
+              <p><span data-lang="it">Una lettura rapida. Nessun racconto superfluo.</span><span data-lang="en">A quick read. No excess storytelling.</span></p>
+            </div>
+          </div>
+          <div class="trace-list">
+            <div class="trace-row"><span data-lang="it">Origine</span><span data-lang="en">Origin</span><strong>Puglia</strong></div>
+            <div class="trace-row"><span data-lang="it">Raccolta</span><span data-lang="en">Harvest</span><strong>2026</strong></div>
+            <div class="trace-row"><span data-lang="it">Stato</span><span data-lang="en">Status</span><strong data-lang="it">Verificato</strong><strong data-lang="en">Verified</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="prodotti" class="section">
+      <div class="section-head">
+        <div><div class="kicker"><span data-lang="it">Selezione</span><span data-lang="en">Selection</span></div><h2><span data-lang="it">Mandorle pugliesi, formati chiari.</span><span data-lang="en">Puglian almonds, clear formats.</span></h2></div>
+        <p class="section-copy"><span data-lang="it">Con guscio, naturali, pelate. Farina e granella da lavorazioni essenziali.</span><span data-lang="en">In shell, natural, blanched. Flour and nibs from essential processing.</span></p>
+      </div>
+
+      <div class="selection-tools">
+        <div class="filters">
+          <button class="filter active" type="button" data-filter="all"><span data-lang="it">Tutto</span><span data-lang="en">All</span></button>
+          <button class="filter" type="button" data-filter="linea"><span data-lang="it">Linea Stella</span><span data-lang="en">Stella line</span></button>
+          <button class="filter" type="button" data-filter="mandorle"><span data-lang="it">Mandorle</span><span data-lang="en">Almonds</span></button>
+          <button class="filter" type="button" data-filter="derivati"><span data-lang="it">Derivati</span><span data-lang="en">Derivatives</span></button>
+        </div>
+        <p class="selection-note"><span data-lang="it">Scegli il formato. Il carrello resta aperto anche per acquisto ospite.</span><span data-lang="en">Choose a format. Checkout is available as guest.</span></p>
+      </div>
+
+      <div class="product-grid">
+        <article class="product" data-category="linea mandorle">
+          <div class="product-media"><img src="assets/stella/images/company/mandorle-dettaglio-01.jpeg" alt="Mandorla con guscio Stella"></div>
+          <div class="product-body">
+            <span class="tag">Linea Stella</span>
+            <h3><span data-lang="it">Mandorla con guscio &ndash; Selezione Stella</span><span data-lang="en">Almond in shell &ndash; Stella Selection</span></h3>
+            <p><span data-lang="it">Integra, protetta dal guscio. Per chi cerca conservazione naturale.</span><span data-lang="en">Whole, protected by its shell. For natural storage.</span></p>
+            <div class="meta"><div><span data-lang="it">Origine</span><span data-lang="en">Origin</span><strong>Puglia</strong></div><div><span data-lang="it">Lotto</span><span data-lang="en">Lot</span><strong>QR</strong></div></div>
+            <div class="formats">
+              <button class="format active" type="button" data-format="1 kg" data-price="4.50"><strong>1 kg</strong><span>4,50 &euro;</span></button>
+              <button class="format" type="button" data-format="5 kg" data-price="21.00"><strong>5 kg</strong><span>21,00 &euro;</span></button>
+              <button class="format" type="button" data-format="10 kg" data-price="40.00"><strong>10 kg</strong><span>40,00 &euro;</span></button>
+            </div>
+            <div class="product-foot"><span class="price">da 4,50 &euro;</span><button class="btn dark slim add" type="button" data-name-it="Mandorla con guscio - Selezione Stella" data-name-en="Almond in shell - Stella Selection" data-format="1 kg" data-price="4.50"><span data-lang="it">Scegli</span><span data-lang="en">Choose</span></button></div>
+          </div>
+        </article>
+
+        <article class="product" data-category="linea mandorle">
+          <div class="product-media"><img src="assets/stella/images/company/mandorle-dettaglio-02.jpeg" alt="Mandorla naturale Stella"></div>
+          <div class="product-body">
+            <span class="tag">Linea Stella</span>
+            <h3><span data-lang="it">Mandorla naturale &ndash; Selezione Stella</span><span data-lang="en">Natural almond &ndash; Stella Selection</span></h3>
+            <p><span data-lang="it">Sgusciata, non pelata. Gusto diretto, profilo pieno.</span><span data-lang="en">Shelled, not blanched. Direct taste, full profile.</span></p>
+            <div class="meta"><div><span data-lang="it">Origine</span><span data-lang="en">Origin</span><strong>Puglia</strong></div><div><span data-lang="it">Lotto</span><span data-lang="en">Lot</span><strong>QR</strong></div></div>
+            <div class="formats">
+              <button class="format active" type="button" data-format="500 g" data-price="6.40"><strong>500 g</strong><span>6,40 &euro;</span></button>
+              <button class="format" type="button" data-format="1 kg" data-price="11.90"><strong>1 kg</strong><span>11,90 &euro;</span></button>
+              <button class="format" type="button" data-format="5 kg" data-price="56.00"><strong>5 kg</strong><span>56,00 &euro;</span></button>
+            </div>
+            <div class="product-foot"><span class="price">da 6,40 &euro;</span><button class="btn dark slim add" type="button" data-name-it="Mandorla naturale - Selezione Stella" data-name-en="Natural almond - Stella Selection" data-format="500 g" data-price="6.40"><span data-lang="it">Scegli</span><span data-lang="en">Choose</span></button></div>
+          </div>
+        </article>
+
+        <article class="product" data-category="linea mandorle">
+          <div class="product-media"><img src="https://source.unsplash.com/900x700/?blanched-almonds" alt="Mandorla pelata Stella"></div>
+          <div class="product-body">
+            <span class="tag">Linea Stella</span>
+            <h3><span data-lang="it">Mandorla pelata &ndash; Selezione Stella</span><span data-lang="en">Blanched almond &ndash; Stella Selection</span></h3>
+            <p><span data-lang="it">Chiara, pulita, pronta per pasticceria e cucina.</span><span data-lang="en">Pale, clean, ready for pastry and cooking.</span></p>
+            <div class="meta"><div><span data-lang="it">Origine</span><span data-lang="en">Origin</span><strong>Puglia</strong></div><div><span data-lang="it">Lotto</span><span data-lang="en">Lot</span><strong>QR</strong></div></div>
+            <div class="formats">
+              <button class="format active" type="button" data-format="500 g" data-price="7.20"><strong>500 g</strong><span>7,20 &euro;</span></button>
+              <button class="format" type="button" data-format="1 kg" data-price="13.50"><strong>1 kg</strong><span>13,50 &euro;</span></button>
+              <button class="format" type="button" data-format="5 kg" data-price="64.00"><strong>5 kg</strong><span>64,00 &euro;</span></button>
+            </div>
+            <div class="product-foot"><span class="price">da 7,20 &euro;</span><button class="btn dark slim add" type="button" data-name-it="Mandorla pelata - Selezione Stella" data-name-en="Blanched almond - Stella Selection" data-format="500 g" data-price="7.20"><span data-lang="it">Scegli</span><span data-lang="en">Choose</span></button></div>
+          </div>
+        </article>
+
+        <article class="product" data-category="derivati">
+          <div class="product-media"><img src="https://source.unsplash.com/900x700/?almond-flour" alt="Farina di mandorla"></div>
+          <div class="product-body">
+            <span class="tag"><span data-lang="it">Derivato</span><span data-lang="en">Derivative</span></span>
+            <h3><span data-lang="it">Farina di mandorla &ndash; Macinatura fine</span><span data-lang="en">Almond flour &ndash; Fine milling</span></h3>
+            <p><span data-lang="it">Fine e asciutta. Per impasti, creme secche e dolci.</span><span data-lang="en">Fine and dry. For doughs, dry creams and desserts.</span></p>
+            <div class="meta"><div><span data-lang="it">Origine</span><span data-lang="en">Origin</span><strong>Puglia</strong></div><div><span data-lang="it">Lotto</span><span data-lang="en">Lot</span><strong>QR</strong></div></div>
+            <div class="formats">
+              <button class="format active" type="button" data-format="250 g" data-price="4.20"><strong>250 g</strong><span>4,20 &euro;</span></button>
+              <button class="format" type="button" data-format="500 g" data-price="7.20"><strong>500 g</strong><span>7,20 &euro;</span></button>
+              <button class="format" type="button" data-format="1 kg" data-price="13.80"><strong>1 kg</strong><span>13,80 &euro;</span></button>
+            </div>
+            <div class="product-foot"><span class="price">da 4,20 &euro;</span><button class="btn dark slim add" type="button" data-name-it="Farina di mandorla - Macinatura fine" data-name-en="Almond flour - Fine milling" data-format="250 g" data-price="4.20"><span data-lang="it">Scegli</span><span data-lang="en">Choose</span></button></div>
+          </div>
+        </article>
+
+        <article class="product" data-category="derivati">
+          <div class="product-media"><img src="https://source.unsplash.com/900x700/?chopped-almonds" alt="Granella di mandorla"></div>
+          <div class="product-body">
+            <span class="tag"><span data-lang="it">Derivato</span><span data-lang="en">Derivative</span></span>
+            <h3><span data-lang="it">Granella di mandorla &ndash; Taglio medio</span><span data-lang="en">Almond nibs &ndash; Medium cut</span></h3>
+            <p><span data-lang="it">Croccante e regolare. Per finiture, dolci e gelateria.</span><span data-lang="en">Crunchy and regular. For finishing, desserts and gelato.</span></p>
+            <div class="meta"><div><span data-lang="it">Origine</span><span data-lang="en">Origin</span><strong>Puglia</strong></div><div><span data-lang="it">Lotto</span><span data-lang="en">Lot</span><strong>QR</strong></div></div>
+            <div class="formats">
+              <button class="format active" type="button" data-format="250 g" data-price="4.90"><strong>250 g</strong><span>4,90 &euro;</span></button>
+              <button class="format" type="button" data-format="500 g" data-price="8.60"><strong>500 g</strong><span>8,60 &euro;</span></button>
+              <button class="format" type="button" data-format="1 kg" data-price="16.50"><strong>1 kg</strong><span>16,50 &euro;</span></button>
+            </div>
+            <div class="product-foot"><span class="price">da 4,90 &euro;</span><button class="btn dark slim add" type="button" data-name-it="Granella di mandorla - Taglio medio" data-name-en="Almond nibs - Medium cut" data-format="250 g" data-price="4.90"><span data-lang="it">Scegli</span><span data-lang="en">Choose</span></button></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="supply-note">
+        <p><span data-lang="it">Per formati superiori a 5 kg o forniture ricorrenti, prepariamo un listino dedicato.</span><span data-lang="en">For formats above 5 kg or recurring supply, we prepare a dedicated price list.</span></p>
+        <button class="btn" type="button" id="openCartFromNote"><span data-lang="it">Richiedi listino</span><span data-lang="en">Request price list</span></button>
+      </div>
+    </section>
+
+    <section id="racconti" class="story-band">
+      <div class="section">
+        <div class="section-head">
+          <div><div class="kicker"><span data-lang="it">Racconti</span><span data-lang="en">Stories</span></div><h2><span data-lang="it">Lavorazione, cucina, memoria.</span><span data-lang="en">Processing, cooking, memory.</span></h2></div>
+          <p class="section-copy"><span data-lang="it">Una sezione editoriale asciutta: ricette, lavorazioni e immagini dell&rsquo;azienda di ieri e di oggi.</span><span data-lang="en">A quiet editorial area: recipes, processing and images of the company, past and present.</span></p>
+        </div>
+        <div class="story-grid">
+          <div class="video-tile">
+            <div class="play">&#9654;</div>
+            <div>
+              <h3><span data-lang="it">Le terre, la raccolta, il laboratorio.</span><span data-lang="en">The land, the harvest, the workshop.</span></h3>
+              <p><span data-lang="it">Spazio per video brevi e fotografie in bianco e nero della storia di famiglia.</span><span data-lang="en">A place for short videos and black-and-white family archive photographs.</span></p>
+            </div>
+          </div>
+          <div class="article-stack">
+            <article class="article">
+              <div class="article-img" style="background-image:url('https://source.unsplash.com/700x700/?almond-milk')"></div>
+              <div class="article-copy"><div class="kicker"><span data-lang="it">Ricetta</span><span data-lang="en">Recipe</span></div><h3><span data-lang="it">Latte di mandorla.</span><span data-lang="en">Almond milk.</span></h3><p><span data-lang="it">Mandorle, acqua fredda, riposo e filtraggio lento.</span><span data-lang="en">Almonds, cold water, resting time and slow filtering.</span></p><a href="#"><span data-lang="it">Leggi</span><span data-lang="en">Read</span></a></div>
+            </article>
+            <article class="article">
+              <div class="article-img" style="background-image:url('https://source.unsplash.com/700x700/?almond-flour')"></div>
+              <div class="article-copy"><div class="kicker"><span data-lang="it">Lavorazione</span><span data-lang="en">Processing</span></div><h3><span data-lang="it">Dalla mandorla alla farina.</span><span data-lang="en">From almond to flour.</span></h3><p><span data-lang="it">Consistenza, profumo e uso in cucina.</span><span data-lang="en">Texture, aroma and use in cooking.</span></p><a href="#"><span data-lang="it">Scopri</span><span data-lang="en">Discover</span></a></div>
+            </article>
+            <article class="article">
+              <div class="article-img" style="background-image:url('https://source.unsplash.com/700x700/?almond-cookies')"></div>
+              <div class="article-copy"><div class="kicker"><span data-lang="it">Cucina</span><span data-lang="en">Cooking</span></div><h3><span data-lang="it">Dolci pugliesi.</span><span data-lang="en">Puglian desserts.</span></h3><p><span data-lang="it">Paste, biscotti e ripieni con mandorla.</span><span data-lang="en">Pastries, biscuits and almond fillings.</span></p><a href="#"><span data-lang="it">Leggi</span><span data-lang="en">Read</span></a></div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="aziende" class="business-band">
+      <div class="section">
+        <div class="section-head">
+          <div><div class="kicker"><span data-lang="it">Forniture</span><span data-lang="en">Supply</span></div><h2><span data-lang="it">Privati e aziende, due percorsi.</span><span data-lang="en">Private and business, two paths.</span></h2></div>
+          <p class="section-copy"><span data-lang="it">Il cliente privato acquista anche senza registrazione. Le aziende richiedono listino, disponibilit&agrave; e formati dedicati.</span><span data-lang="en">Private customers can buy without registration. Businesses request price list, availability and dedicated formats.</span></p>
+        </div>
+        <div class="business-grid">
+          <article class="business-card"><strong>0-5 kg</strong><p><span data-lang="it">Acquisto diretto. Account facoltativo per salvare dati, ordini e newsletter.</span><span data-lang="en">Direct purchase. Optional account for saved details, orders and newsletter.</span></p></article>
+          <article class="business-card"><strong>5-20 kg</strong><p><span data-lang="it">Il carrello suggerisce una richiesta dedicata per disponibilit&agrave; e tempi.</span><span data-lang="en">The cart suggests a dedicated request for availability and timing.</span></p></article>
+          <article class="business-card"><strong>20+ kg</strong><p><span data-lang="it">Percorso B2B con partita IVA, quantit&agrave; indicative, listino e contatto diretto.</span><span data-lang="en">B2B path with VAT details, expected quantities, price list and direct contact.</span></p><button class="btn ghost open-business" type="button"><span data-lang="it">Richiedi listino</span><span data-lang="en">Request price list</span></button></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="contatti" class="section">
+      <div class="section-head">
+        <div><div class="kicker"><span data-lang="it">Contatti</span><span data-lang="en">Contact</span></div><h2><span data-lang="it">Dove trovarci.</span><span data-lang="en">Where to find us.</span></h2></div>
+        <p class="section-copy"><span data-lang="it">Per ordini, forniture e informazioni sui lotti.</span><span data-lang="en">For orders, supply requests and lot information.</span></p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="kicker">Stella</div>
+          <div class="contact-list">
+            <div class="contact-row"><span data-lang="it">Indirizzo</span><span data-lang="en">Address</span><strong>Contrada Mandorleti, Puglia<br>Italia</strong></div>
+            <div class="contact-row"><span>Email</span><strong>info@stella.it</strong></div>
+            <div class="contact-row"><span data-lang="it">Telefono</span><span data-lang="en">Phone</span><strong>+39 000 000 0000</strong></div>
+            <div class="contact-row"><span data-lang="it">Orari</span><span data-lang="en">Hours</span><strong data-lang="it">Lun - Ven, 9:00 - 18:00</strong><strong data-lang="en">Mon - Fri, 9:00 - 18:00</strong></div>
+          </div>
+        </div>
+        <div class="map">
+          <div>
+            <h3><span data-lang="it">Terre pugliesi, lotti verificabili.</span><span data-lang="en">Puglian land, verifiable lots.</span></h3>
+            <p><span data-lang="it">Un riferimento semplice per clienti, aziende e rivenditori.</span><span data-lang="en">A simple reference for customers, businesses and retailers.</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="cartDrawer">
+    <div class="drawer-head">
+      <h3><span data-lang="it">Carrello</span><span data-lang="en">Cart</span></h3>
+      <button class="icon-btn" id="closeCart" type="button">X</button>
+    </div>
+    <div class="drawer-body" id="cartLines"></div>
+    <div class="drawer-foot">
+      <div class="total"><span data-lang="it">Totale</span><span data-lang="en">Total</span><span id="cartTotal">0,00 &euro;</span></div>
+      <div class="business-hint" id="businessHint"><span data-lang="it">Oltre i 5 kg conviene richiedere una fornitura dedicata.</span><span data-lang="en">Above 5 kg, a dedicated supply request is recommended.</span></div>
+      <div class="checkout-tabs">
+        <button class="checkout-tab active" type="button" data-checkout="private"><span data-lang="it">Privato</span><span data-lang="en">Private</span></button>
+        <button class="checkout-tab" type="button" data-checkout="business"><span data-lang="it">Azienda</span><span data-lang="en">Business</span></button>
+      </div>
+      <div class="checkout-panel active" id="privateCheckout">
+        <div class="checkout-form">
+          <input type="text" data-placeholder-it="Nome e cognome" data-placeholder-en="Full name" placeholder="Nome e cognome">
+          <input type="email" placeholder="Email">
+          <input type="tel" data-placeholder-it="Telefono" data-placeholder-en="Phone" placeholder="Telefono">
+          <textarea data-placeholder-it="Indirizzo e note consegna" data-placeholder-en="Address and delivery notes" placeholder="Indirizzo e note consegna"></textarea>
+          <label class="check-row"><input type="checkbox"><span data-lang="it">Crea account dopo l&rsquo;ordine.</span><span data-lang="en">Create an account after checkout.</span></label>
+          <label class="check-row"><input type="checkbox"><span data-lang="it">Iscrivimi alla newsletter.</span><span data-lang="en">Subscribe me to the newsletter.</span></label>
+          <div class="account-box"><span data-lang="it">Puoi acquistare anche senza registrarti.</span><span data-lang="en">You can buy without registration.</span></div>
+          <button class="btn dark" type="button"><span data-lang="it">Procedi come ospite</span><span data-lang="en">Continue as guest</span></button>
+        </div>
+      </div>
+      <div class="checkout-panel" id="businessCheckout">
+        <div class="checkout-form">
+          <input type="text" data-placeholder-it="Ragione sociale" data-placeholder-en="Company name" placeholder="Ragione sociale">
+          <input type="text" data-placeholder-it="Partita IVA" data-placeholder-en="VAT number" placeholder="Partita IVA">
+          <input type="email" data-placeholder-it="Email aziendale" data-placeholder-en="Business email" placeholder="Email aziendale">
+          <select><option>Ristorante / pasticceria</option><option>Bottega / rivenditore</option><option>Hotel / catering</option><option>Altro</option></select>
+          <input type="text" data-placeholder-it="Quantit&agrave; indicativa: es. 20 kg al mese" data-placeholder-en="Expected quantity: e.g. 20 kg/month" placeholder="Quantit&agrave; indicativa: es. 20 kg al mese">
+          <textarea data-placeholder-it="Prodotti, formati e note sulla fornitura" data-placeholder-en="Products, formats and supply notes" placeholder="Prodotti, formati e note sulla fornitura"></textarea>
+          <button class="btn dark" type="button"><span data-lang="it">Richiedi fornitura</span><span data-lang="en">Request supply</span></button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const state={lang:"it",cart:[]};
+    const body=document.body;
+    const drawer=document.getElementById("cartDrawer");
+    const overlay=document.getElementById("overlay");
+    const cartLines=document.getElementById("cartLines");
+    const cartCount=document.getElementById("cartCount");
+    const cartTotal=document.getElementById("cartTotal");
+    const businessHint=document.getElementById("businessHint");
+    const money=value=>value.toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2})+" \u20ac";
+    const itemName=item=>state.lang==="it"?item.nameIt:item.nameEn;
+
+    function renderCart(){
+      const qty=state.cart.reduce((sum,item)=>sum+item.qty,0);
+      const kilos=state.cart.reduce((sum,item)=>sum+(item.kg||0)*item.qty,0);
+      const total=state.cart.reduce((sum,item)=>sum+item.qty*item.price,0);
+      cartCount.textContent=qty;
+      cartTotal.textContent=money(total);
+      businessHint.classList.toggle("show",kilos>5);
+      if(!state.cart.length){
+        cartLines.innerHTML=`<div class="cart-line"><div>${state.lang==="it"?"Carrello vuoto":"Your cart is empty"}<small>${state.lang==="it"?"Scegli un formato dalla selezione":"Choose a format from the selection"}</small></div><strong>0,00 \u20ac</strong></div>`;
+        return;
+      }
+      cartLines.innerHTML=state.cart.map(item=>`<div class="cart-line"><div>${itemName(item)}<small>${item.format} &middot; ${state.lang==="it"?"Quantit\u00e0":"Quantity"} ${item.qty}</small></div><strong>${money(item.qty*item.price)}</strong></div>`).join("");
+    }
+
+    function parseKg(format){
+      if(format.includes("kg")) return Number(format.replace("kg","").trim().replace(",","."));
+      if(format.includes("g")) return Number(format.replace("g","").trim().replace(",","."))/1000;
+      return 0;
+    }
+    function openCart(mode="private"){drawer.classList.add("open");overlay.classList.add("open");setCheckout(mode)}
+    function closeCart(){drawer.classList.remove("open");overlay.classList.remove("open")}
+    function setCheckout(mode){
+      document.querySelectorAll(".checkout-tab").forEach(btn=>btn.classList.toggle("active",btn.dataset.checkout===mode));
+      document.querySelectorAll(".checkout-panel").forEach(panel=>panel.classList.remove("active"));
+      document.getElementById(mode==="business"?"businessCheckout":"privateCheckout").classList.add("active");
+    }
+    function setLanguage(lang){
+      state.lang=lang;
+      body.classList.toggle("it",lang==="it");
+      body.classList.toggle("en",lang==="en");
+      document.documentElement.lang=lang;
+      document.querySelectorAll(".lang-btn").forEach(btn=>btn.classList.toggle("active",btn.dataset.setLang===lang));
+      document.querySelectorAll("[data-placeholder-it]").forEach(field=>{field.placeholder=lang==="it"?field.dataset.placeholderIt:field.dataset.placeholderEn});
+      renderCart();
+    }
+
+    document.querySelectorAll(".format").forEach(btn=>btn.addEventListener("click",()=>{
+      btn.parentElement.querySelectorAll(".format").forEach(item=>item.classList.remove("active"));
+      btn.classList.add("active");
+      const add=btn.closest(".product-body").querySelector(".add");
+      add.dataset.format=btn.dataset.format;
+      add.dataset.price=btn.dataset.price;
+      add.innerHTML=`<span data-lang="it">Scegli ${btn.dataset.format}</span><span data-lang="en">Choose ${btn.dataset.format}</span>`;
+    }));
+    document.querySelectorAll(".add").forEach(btn=>btn.addEventListener("click",()=>{
+      const format=btn.dataset.format||"";
+      const existing=state.cart.find(item=>item.nameIt===btn.dataset.nameIt&&item.format===format);
+      if(existing) existing.qty++;
+      else state.cart.push({nameIt:btn.dataset.nameIt,nameEn:btn.dataset.nameEn,format,price:Number(btn.dataset.price),kg:parseKg(format),qty:1});
+      renderCart();
+      openCart("private");
+    }));
+    document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",()=>{
+      const filter=btn.dataset.filter;
+      document.querySelectorAll(".filter").forEach(item=>item.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".product").forEach(product=>{
+        product.style.display=filter==="all"||product.dataset.category.includes(filter)?"grid":"none";
+      });
+    }));
+    document.querySelectorAll(".checkout-tab").forEach(btn=>btn.addEventListener("click",()=>setCheckout(btn.dataset.checkout)));
+    document.querySelectorAll(".open-business").forEach(btn=>btn.addEventListener("click",()=>openCart("business")));
+    document.querySelectorAll(".lang-btn").forEach(btn=>btn.addEventListener("click",()=>setLanguage(btn.dataset.setLang)));
+    document.getElementById("openCart").addEventListener("click",()=>openCart("private"));
+    document.getElementById("openCartFromNote").addEventListener("click",()=>openCart("business"));
+    document.getElementById("closeCart").addEventListener("click",closeCart);
+    overlay.addEventListener("click",closeCart);
+    setLanguage("it");
+  </script>
+</body>
+</html>

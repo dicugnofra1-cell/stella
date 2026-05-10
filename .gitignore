@@ -3,3 +3,7 @@ bin/
 obj/
 *.user
 *.suo
+~$*
+*.zip
+_unzipped/
+Stella-Prototype/

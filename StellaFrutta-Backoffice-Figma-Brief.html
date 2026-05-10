@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StellaFrutta Backoffice - Brief per prototipo Figma</title>
+  <style>
+    :root {
+      --bg: #f5f2ea;
+      --surface: #fffdf8;
+      --surface-alt: #f0eadf;
+      --text: #243029;
+      --muted: #5d6a62;
+      --primary: #4e6b43;
+      --primary-soft: #dce7d4;
+      --warning: #b36b2c;
+      --warning-soft: #f3e1cf;
+      --danger: #a24834;
+      --danger-soft: #f2d9d2;
+      --border: #d9d2c4;
+      --shadow: 0 12px 32px rgba(36, 48, 41, 0.08);
+      --radius: 16px;
+      --max: 1040px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(180deg, #f7f4ed 0%, #efe8dc 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 40px 20px 64px;
+    }
+
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-top: 16px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-top: 32px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-top: 24px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .lead {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    ul, ol {
+      padding-left: 22px;
+      margin: 0 0 12px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .ok {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .warn {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    code {
+      background: #ece6da;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 20px 14px 40px;
+      }
+
+      .hero,
+      .section {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <span class="eyebrow">StellaFrutta Backoffice</span>
+      <h1>Brief per prototipo Figma</h1>
+      <p class="lead">
+        Base progettuale per il frontend aziendale di StellaFrutta, coerente con il Core applicativo che gestisce prodotti, lotti, stock, qualita e ordini.
+      </p>
+      <div class="badge-row">
+        <span class="badge ok">Controllo operativo</span>
+        <span class="badge ok">Tracciabilita</span>
+        <span class="badge warn">Workflow ordini</span>
+        <span class="badge danger">Qualita e blocchi</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Obiettivo</h2>
+      <p>Il backoffice deve essere l'interfaccia operativa del Core StellaFrutta e permettere la gestione di:</p>
+      <ul>
+        <li>prodotti</li>
+        <li>fornitori</li>
+        <li>lotti</li>
+        <li>magazzino e movimenti</li>
+        <li>controlli qualita</li>
+        <li>ordini</li>
+        <li>tracciabilita e audit</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Utenti principali</h2>
+      <div class="grid">
+        <div class="card"><strong>Admin</strong><br>Visione completa, configurazioni, supervisione.</div>
+        <div class="card"><strong>Commerciale</strong><br>Prodotti, clienti, ordini B2B, listini.</div>
+        <div class="card"><strong>Magazzino</strong><br>Giacenze, movimenti, preparazione e spedizioni.</div>
+        <div class="card"><strong>Qualita</strong><br>Controlli, non conformita, certificazioni.</div>
+        <div class="card"><strong>Produzione</strong><br>Visibilita operativa su lotti e avanzamento.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Architettura informativa</h2>
+      <h3>Sidebar</h3>
+      <ol>
+        <li>Dashboard</li>
+        <li>Prodotti</li>
+        <li>Fornitori</li>
+        <li>Lotti</li>
+        <li>Magazzino</li>
+        <li>Qualita</li>
+        <li>Ordini</li>
+        <li>Clienti</li>
+        <li>Audit</li>
+        <li>Impostazioni</li>
+      </ol>
+      <h3>Top bar</h3>
+      <ul>
+        <li>ricerca globale</li>
+        <li>notifiche</li>
+        <li>stato sincronizzazioni o job</li>
+        <li>profilo utente</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Schermate prioritarie V1</h2>
+      <div class="grid">
+        <div class="card"><strong>Dashboard operativa</strong><br>KPI, attivita urgenti, alert, ultimi eventi.</div>
+        <div class="card"><strong>Lista prodotti</strong><br>Tabella con filtri, disponibilita e stato.</div>
+        <div class="card"><strong>Dettaglio prodotto</strong><br>Overview, lotti, stock, prezzi, audit.</div>
+        <div class="card"><strong>Lista lotti</strong><br>Tracciabilita, esiti qualita, flag BIO.</div>
+        <div class="card"><strong>Dettaglio lotto</strong><br>Timeline, movimenti, controlli, documenti.</div>
+        <div class="card"><strong>Magazzino</strong><br>Giacenze e movimenti con forte filtro operativo.</div>
+        <div class="card"><strong>Qualita</strong><br>Dashboard e dettaglio controllo.</div>
+        <div class="card"><strong>Ordini</strong><br>Lista operativa e dettaglio con timeline.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Dettaglio lotto</h2>
+      <p>Schermata centrale del backoffice, da trattare come vista ad alta densita informativa.</p>
+      <ul>
+        <li>colonna sinistra con dati principali del lotto, prodotto, fornitore e quantita</li>
+        <li>colonna destra con stato corrente, badge qualita e azioni rapide</li>
+        <li>timeline tracciabilita</li>
+        <li>movimenti di magazzino</li>
+        <li>controlli qualita</li>
+        <li>documenti e certificazioni</li>
+        <li>ordini collegati o prenotazioni stock</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Flussi prioritari</h2>
+      <h3>Creazione prodotto</h3>
+      <ol>
+        <li>Dashboard</li>
+        <li>Lista prodotti</li>
+        <li>Nuovo prodotto</li>
+        <li>Salvataggio</li>
+        <li>Dettaglio prodotto</li>
+      </ol>
+
+      <h3>Ricezione lotto</h3>
+      <ol>
+        <li>Lista lotti</li>
+        <li>Nuovo lotto o ricezione merce</li>
+        <li>Compilazione dati lotto</li>
+        <li>Conferma</li>
+        <li>Dettaglio lotto</li>
+        <li>Apertura eventuale controllo qualita</li>
+      </ol>
+
+      <h3>Preparazione ordine</h3>
+      <ol>
+        <li>Lista ordini filtrata su <code>pagato</code></li>
+        <li>Dettaglio ordine</li>
+        <li>Vista riserve stock</li>
+        <li>Conferma preparazione</li>
+        <li>Registra spedizione</li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2>Componenti design system da preparare</h2>
+      <div class="grid">
+        <div class="card">sidebar</div>
+        <div class="card">topbar</div>
+        <div class="card">cards KPI</div>
+        <div class="card">data table</div>
+        <div class="card">filter bar</div>
+        <div class="card">status badge</div>
+        <div class="card">stepper stati ordine</div>
+        <div class="card">timeline eventi</div>
+        <div class="card">tabs</div>
+        <div class="card">drawer</div>
+        <div class="card">modal conferma</div>
+        <div class="card">toast esito azioni</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Stati da rappresentare bene</h2>
+      <h3>Ordine</h3>
+      <p><code>creato</code>, <code>in_attesa_pagamento</code>, <code>pagato</code>, <code>in_preparazione</code>, <code>spedito</code>, <code>chiuso</code>, <code>annullato</code>, <code>fallito</code></p>
+      <h3>Lotto</h3>
+      <p><code>ricevuto</code>, <code>in_controllo</code>, <code>disponibile</code>, <code>bloccato</code>, <code>esaurito</code></p>
+      <h3>Qualita</h3>
+      <p><code>aperto</code>, <code>in_verifica</code>, <code>approvato</code>, <code>respinto</code>, <code>chiuso</code></p>
+    </section>
+
+    <section class="section">
+      <h2>Direzione visiva</h2>
+      <ul>
+        <li>sfondo chiaro caldo o neutro</li>
+        <li>pannelli con contrasto medio</li>
+        <li>verde salvia o oliva per stati positivi</li>
+        <li>ambra per warning</li>
+        <li>rosso mattone per blocchi o non conformita</li>
+        <li>tipografia molto leggibile</li>
+        <li>tabelle pulite e ariose</li>
+      </ul>
+      <p>Mood: solido, agricolo-industriale, affidabile, tracciabile.</p>
+    </section>
+
+    <section class="section">
+      <h2>Sequenza pratica in Figma</h2>
+      <ol>
+        <li>Crea la pagina <code>Backoffice / Foundations</code> con colori, tipografia, badge e componenti base.</li>
+        <li>Crea la pagina <code>Backoffice / Core Flows</code>.</li>
+        <li>Disegna prima i frame desktop di Dashboard, Lista prodotti, Dettaglio lotto, Lista ordini e Dettaglio ordine.</li>
+        <li>Collega i flow principali.</li>
+        <li>Aggiungi poi le viste qualita e magazzino avanzate.</li>
+      </ol>
+      <p class="footer-note">Queste 5 schermate bastano gia a raccontare bene il prodotto e il legame col backend.</p>
+    </section>
+  </main>
+</body>
+</html>

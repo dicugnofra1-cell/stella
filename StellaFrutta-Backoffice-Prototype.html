@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StellaFrutta Backoffice Prototype</title>
+  <style>
+    :root{--bg:#efe8dc;--surface:#fffdf8;--surface2:#f4edde;--line:#d9cfbc;--text:#223127;--muted:#647166;--olive:#5a7650;--olive2:#425a3a;--oliveSoft:#dce7d3;--amber:#ba7a2f;--amberSoft:#f4e4cf;--brick:#a54c37;--brickSoft:#f2dbd4;--sky:#d8e5e7;--shadow:0 18px 50px rgba(46,49,39,.12)}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:"Segoe UI",Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top left,rgba(255,255,255,.45),transparent 28%),radial-gradient(circle at bottom right,rgba(90,118,80,.16),transparent 22%),linear-gradient(180deg,#f5efe4 0%,var(--bg) 100%)}
+    .shell{display:grid;grid-template-columns:286px 1fr;gap:22px;padding:22px;min-height:100vh}
+    .sidebar{background:linear-gradient(180deg,rgba(72,96,63,.97),rgba(48,67,42,.98));color:#f7f2e8;border-radius:28px;padding:24px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:22px;position:sticky;top:22px;height:calc(100vh - 44px)}
+    .brand-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:rgba(255,255,255,.12);font-weight:800;font-size:20px;margin-bottom:14px}
+    .brand h1{margin:0;font-size:24px;line-height:1.05;letter-spacing:-.03em}.brand p,.nav small,.side-card p{color:rgba(247,242,232,.72)}
+    .nav{display:flex;flex-direction:column;gap:8px}.nav small{padding:0 12px;text-transform:uppercase;font-size:11px;letter-spacing:.12em}
+    .nav button{border:0;width:100%;text-align:left;border-radius:16px;background:transparent;color:#f9f5ed;padding:14px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:.18s ease}
+    .nav button:hover,.nav button.active{background:rgba(255,255,255,.12);transform:translateX(2px)} .count{font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.12)}
+    .side-card{margin-top:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:18px}.side-card h3{margin:0 0 8px;font-size:16px}.pill{display:inline-block;margin-top:10px;background:rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-size:12px}
+    .main{display:flex;flex-direction:column;gap:18px}
+    .topbar{display:flex;align-items:center;gap:16px;padding:18px 22px;background:rgba(255,251,244,.76);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.48);border-radius:24px;box-shadow:var(--shadow)}
+    .search{flex:1;background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:14px 16px;color:var(--muted)} .top-meta{display:flex;gap:12px;align-items:center}
+    .chip,.tag,.status{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:700}.chip,.tag{background:var(--surface2);border:1px solid var(--line)}
+    .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7d9872,#526d48);color:#fff;display:grid;place-items:center;font-weight:700}
+    .screen{display:none;background:rgba(255,253,248,.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.55);border-radius:28px;padding:24px;box-shadow:var(--shadow)} .screen.active{display:block}
+    .screen-header{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:22px}.eyebrow{color:var(--olive);text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:800;margin-bottom:8px}
+    h2{margin:0;font-size:34px;line-height:1.04;letter-spacing:-.04em}.subtitle{margin-top:8px;color:var(--muted);max-width:820px}
+    .actions,.filter-row,.stats-row{display:flex;gap:10px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:14px;padding:12px 16px;font-weight:700;cursor:pointer}.btn.primary{background:linear-gradient(180deg,var(--olive),var(--olive2));color:#fff;border-color:transparent}
+    .grid4,.grid2,.hero,.detail{display:grid;gap:16px}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:1.45fr 1fr}.detail{grid-template-columns:1.2fr .8fr}
+    .card{background:rgba(255,251,244,.88);border:1px solid var(--line);border-radius:22px;padding:18px}.label,.section-title,.table th,.meta{color:var(--muted)}
+    .value{font-size:34px;line-height:1;font-weight:800;margin:10px 0 12px;letter-spacing:-.04em}.trend{font-size:13px;font-weight:700}.up{color:var(--olive)}.warn-text{color:var(--amber)}.down{color:var(--brick)}
+    .section-title{margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:.12em;font-weight:800}.list,.timeline{display:flex;flex-direction:column;gap:12px}
+    .item,.line{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid rgba(217,207,188,.65)}.item:first-child,.line:first-child{border-top:0;padding-top:0}
+    .title{font-weight:700}.status.ok{background:var(--oliveSoft);color:var(--olive2)}.status.warn{background:var(--amberSoft);color:var(--amber)}.status.danger{background:var(--brickSoft);color:var(--brick)}.status.info{background:var(--sky);color:#32555e}
+    .table-wrap{overflow:hidden;border-radius:20px;border:1px solid var(--line);background:var(--surface)} table{width:100%;border-collapse:collapse}
+    .table th,.table td{text-align:left;padding:14px 16px;border-bottom:1px solid rgba(217,207,188,.56);font-size:14px}.table th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;background:#faf5ec}.table tr:last-child td{border-bottom:0}
+    .bar{height:10px;background:#ece5d7;border-radius:999px;overflow:hidden;margin-top:12px}.bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#6f8c64,#9fba8e)}
+    .timeline-item{display:grid;grid-template-columns:18px 1fr;gap:12px;align-items:start}.dot{width:14px;height:14px;border-radius:50%;margin-top:4px;background:var(--olive);box-shadow:0 0 0 6px rgba(90,118,80,.12)} .dot.warn{background:var(--amber);box-shadow:0 0 0 6px rgba(186,122,47,.12)} .dot.danger{background:var(--brick);box-shadow:0 0 0 6px rgba(165,76,55,.12)}
+    .mini{background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:12px 14px;min-width:132px}.mini strong{display:block;font-size:22px;line-height:1.1;margin-top:6px}
+    .stepper{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.step{padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--surface2);font-size:13px;font-weight:700;text-align:center}.step.active{background:var(--oliveSoft);color:var(--olive2)}.step.done{background:#edf3e8;color:var(--olive)}
+    @media (max-width:1180px){.shell{grid-template-columns:1fr}.sidebar{position:relative;top:0;height:auto}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.hero,.detail,.grid2{grid-template-columns:1fr}}
+    @media (max-width:760px){.grid4,.stepper{grid-template-columns:1fr}.screen-header,.topbar{flex-direction:column;align-items:stretch}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <h1>StellaFrutta<br>Backoffice</h1>
+        <p>Core operativo per varieta, lavorazioni, lotti, ordini e qualita.</p>
+      </div>
+      <nav class="nav">
+        <small>Operativita</small>
+        <button class="active" data-screen="dashboard"><span>Dashboard</span><span class="count">06</span></button>
+        <button data-screen="products"><span>Prodotti</span><span class="count">12</span></button>
+        <button data-screen="lot"><span>Lotti</span><span class="count">18</span></button>
+        <button data-screen="orders"><span>Ordini</span><span class="count">42</span></button>
+        <button><span>Magazzino</span><span class="count">12</span></button>
+        <button><span>Qualita</span><span class="count">04</span></button>
+      </nav>
+      <div class="side-card">
+        <h3>Alert di giornata</h3>
+        <p>2 lotti Tuono bloccati, 5 ordini da preparare e 1 controllo qualita in scadenza.</p>
+        <span class="pill">Aggiornato 09:42</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="search">Cerca ordine, lotto, varieta, lavorazione, cliente o movimento...</div>
+        <div class="top-meta">
+          <div class="chip">Sincronizzazione ERP OK</div>
+          <div class="chip">Magazzino centrale</div>
+          <div class="avatar">RC</div>
+        </div>
+      </div>
+
+      <section id="dashboard" class="screen active">
+        <div class="screen-header">
+          <div>
+            <div class="eyebrow">Panoramica</div>
+            <h2>Dashboard operativa</h2>
+            <div class="subtitle">Vista ad alta densita per controllare ordini, stock, qualita e attivita urgenti su Filippo Cea e Tuono.</div>
+          </div>
+          <div class="actions"><button class="btn">Esporta report</button><button class="btn primary">Nuovo lotto</button></div>
+        </div>
+        <div class="grid4">
+          <div class="card"><div class="label">Ordini da preparare</div><div class="value">18</div><div class="trend up">+4 rispetto a ieri</div><div class="bar"><span style="width:74%"></span></div></div>
+          <div class="card"><div class="label">Lotti in controllo</div><div class="value">7</div><div class="trend warn-text">2 richiedono esito oggi</div><div class="bar"><span style="width:52%"></span></div></div>
+          <div class="card"><div class="label">SKU attive mandorle</div><div class="value">12</div><div class="trend up">Varieta e lavorazioni tracciate</div><div class="bar"><span style="width:68%"></span></div></div>
+          <div class="card"><div class="label">Ordini spediti oggi</div><div class="value">26</div><div class="trend up">Target giornaliero 82%</div><div class="bar"><span style="width:82%"></span></div></div>
+        </div>
+        <div class="hero">
+          <div class="card">
+            <div class="section-title">Attivita urgenti</div>
+            <div class="list">
+              <div class="item"><div><div class="title">Ordine SF-2026-0184 da mettere in preparazione</div><div class="meta">Cliente B2C - pagamento confermato - 4 righe</div></div><span class="status warn">Alta priorita</span></div>
+              <div class="item"><div><div class="title">Lotto L-TU-24031 in attesa esito qualita</div><div class="meta">Mandorle Tuono pelate - verifica entro le 12:00</div></div><span class="status danger">Bloccante</span></div>
+              <div class="item"><div><div class="title">Farina di mandorle Filippo Cea sotto soglia</div><div class="meta">Disponibile 42 kg - riservati 28 kg</div></div><span class="status info">Riordino</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">Ultimi eventi</div>
+            <div class="timeline">
+              <div class="timeline-item"><div class="dot"></div><div><div class="title">Ordine SF-2026-0181 spedito</div><div class="meta">09:31 - tracking generato</div></div></div>
+              <div class="timeline-item"><div class="dot warn"></div><div><div class="title">Controllo QC-072 aperto</div><div class="meta">09:05 - operatore Giulia Bianchi</div></div></div>
+              <div class="timeline-item"><div class="dot danger"></div><div><div class="title">Anomalia stock su mandorle affettate Tuono</div><div class="meta">08:44 - differenza inventariale di 12 kg</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="section-title">Pipeline ordini</div>
+            <div class="line"><span class="title">In attesa pagamento</span><span class="tag">9</span></div>
+            <div class="line"><span class="title">Pagati</span><span class="tag">18</span></div>
+            <div class="line"><span class="title">In preparazione</span><span class="tag">11</span></div>
+            <div class="line"><span class="title">Spediti</span><span class="tag">26 oggi</span></div>
+          </div>
+          <div class="card">
+            <div class="section-title">Stock sensibili</div>
+            <div class="item"><div><div class="title">Farina di mandorle Filippo Cea</div><div class="meta">Disponibile 42 kg - Riservato 28 kg</div></div><span class="status warn">Sotto soglia</span></div>
+            <div class="item"><div><div class="title">Mandorle pelate Tuono</div><div class="meta">Lotto principale in controllo</div></div><span class="status danger">Rischio blocco</span></div>
+            <div class="item"><div><div class="title">Mandorle al naturale Filippo Cea</div><div class="meta">Disponibile 264 kg - Copertura 6 giorni</div></div><span class="status ok">Stabile</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="products" class="screen">
+        <div class="screen-header">
+          <div><div class="eyebrow">Catalogo</div><h2>Lista prodotti</h2><div class="subtitle">Vista commerciale e operativa del catalogo mandorle, organizzato per varieta e lavorazione.</div></div>
+          <div class="actions"><button class="btn">Esporta CSV</button><button class="btn primary">Nuovo prodotto</button></div>
+        </div>
+        <div class="filter-row"><div class="chip">Varieta: Filippo Cea + Tuono</div><div class="chip">Lavorazione: Tutte</div><div class="chip">Canale: B2C + B2B</div><div class="chip">Ultimo aggiornamento: 7 giorni</div></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Codice</th><th>Prodotto</th><th>Varieta</th><th>Lavorazione</th><th>Disponibile</th><th>Riservato</th><th>Stato</th><th>Ultimo aggiornamento</th></tr></thead>
+            <tbody>
+              <tr><td>PRD-0018</td><td><strong>Mandorle al naturale 500g</strong><div class="meta">SKU ecommerce attivo</div></td><td>Filippo Cea</td><td>Al naturale</td><td>118</td><td>22</td><td><span class="status ok">Disponibile</span></td><td>Oggi, 09:05</td></tr>
+              <tr><td>PRD-0031</td><td><strong>Farina di mandorle 1kg</strong><div class="meta">Promozione weekend</div></td><td>Filippo Cea</td><td>Farina</td><td>42</td><td>28</td><td><span class="status danger">Sotto soglia</span></td><td>Oggi, 08:44</td></tr>
+              <tr><td>PRD-0064</td><td><strong>Mandorle pelate 1kg</strong><div class="meta">Listino B2B aggiornato</div></td><td>Tuono</td><td>Pelate</td><td>264</td><td>34</td><td><span class="status warn">Controllo lotto</span></td><td>Ieri, 17:26</td></tr>
+              <tr><td>PRD-0077</td><td><strong>Mandorle affettate 500g</strong><div class="meta">Verifica inventariale in corso</div></td><td>Tuono</td><td>Affettate</td><td>56</td><td>9</td><td><span class="status info">Revisione stock</span></td><td>Oggi, 08:44</td></tr>
+              <tr><td>PRD-0081</td><td><strong>Bastoncini di mandorle 500g</strong><div class="meta">Canale bakery</div></td><td>Filippo Cea</td><td>Bastoncini</td><td>73</td><td>15</td><td><span class="status ok">Disponibile</span></td><td>Oggi, 07:58</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="lot" class="screen">
+        <div class="screen-header">
+          <div><div class="eyebrow">Tracciabilita</div><h2>Dettaglio lotto L-TU-24031</h2><div class="subtitle">Vista centrale per controllo operativo, qualita, movimenti e impatto sugli ordini collegati.</div></div>
+          <div class="actions"><button class="btn">Registra movimento</button><button class="btn">Apri controllo qualita</button><button class="btn primary">Sblocca lotto</button></div>
+        </div>
+        <div class="detail">
+          <div>
+            <div class="card">
+              <div class="section-title">Profilo lotto</div>
+              <div class="title">Mandorle pelate Tuono</div>
+              <div class="meta">Varieta Tuono - Fornitore Azienda Agricola StellaFrutta - Ricezione 01 Apr 2026 - BIO attivo</div>
+              <div class="stats-row">
+                <div class="mini">Quantita iniziale<strong>320 kg</strong></div>
+                <div class="mini">Residuo<strong>118 kg</strong></div>
+                <div class="mini">Riservato<strong>22 kg</strong></div>
+                <div class="mini">Ordini impattati<strong>8</strong></div>
+              </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="section-title">Timeline tracciabilita</div>
+              <div class="timeline">
+                <div class="timeline-item"><div class="dot"></div><div><div class="title">Ricezione mandorla sgusciata e creazione lotto</div><div class="meta">01 Apr 2026 - 07:42 - Operatore Marco R.</div></div></div>
+                <div class="timeline-item"><div class="dot"></div><div><div class="title">Passaggio a lavorazione pelata</div><div class="meta">01 Apr 2026 - 08:10 - 320 kg registrati</div></div></div>
+                <div class="timeline-item"><div class="dot warn"></div><div><div class="title">Aperto controllo qualita QC-072</div><div class="meta">02 Apr 2026 - 09:05 - verifica umidita e conformita</div></div></div>
+                <div class="timeline-item"><div class="dot danger"></div><div><div class="title">Lotto temporaneamente bloccato</div><div class="meta">02 Apr 2026 - 09:18 - in attesa esito</div></div></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="section-title">Stato corrente</div>
+              <div class="status danger">Bloccato per controllo</div>
+              <div class="item" style="margin-top:14px"><div><div class="title">Esito qualita</div><div class="meta">Campionamento completato al 65%</div></div><span class="tag">In verifica</span></div>
+              <div class="item"><div><div class="title">Documenti</div><div class="meta">Certificato BIO e DDT</div></div><span class="tag">2 file</span></div>
+              <div class="item"><div><div class="title">Ordini collegati</div><div class="meta">Da verificare prima della preparazione</div></div><span class="tag">8 ordini</span></div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="section-title">Controllo qualita QC-072</div>
+              <div class="line"><span class="title">Calibro e uniformita</span><span class="status ok">OK</span></div>
+              <div class="line"><span class="title">Integrita lavorazione</span><span class="status ok">OK</span></div>
+              <div class="line"><span class="title">Umidita e conformita</span><span class="status warn">In attesa</span></div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="section-title">Ordini impattati</div>
+              <div class="item"><div><div class="title">SF-2026-0184</div><div class="meta">B2C - consegna prevista domani</div></div><span class="status warn">Da riallocare</span></div>
+              <div class="item"><div><div class="title">SF-2026-0186</div><div class="meta">B2B - 12 kg</div></div><span class="status info">Monitorare</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="orders" class="screen">
+        <div class="screen-header">
+          <div><div class="eyebrow">Fulfillment</div><h2>Ordini e dettaglio operativo</h2><div class="subtitle">Vista per commerciale e magazzino, con prodotti mandorla leggibili per varieta e lavorazione.</div></div>
+          <div class="actions"><button class="btn">Filtri avanzati</button><button class="btn primary">Nuovo ordine B2B</button></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="section-title">Lista ordini</div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>Ordine</th><th>Cliente</th><th>Canale</th><th>Totale</th><th>Stato</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>SF-2026-0184</strong><div class="meta">02 Apr 2026</div></td><td>Elena Valli</td><td>B2C</td><td>EUR 48,20</td><td><span class="status warn">Pagato</span></td></tr>
+                  <tr><td><strong>SF-2026-0186</strong><div class="meta">02 Apr 2026</div></td><td>Gastronomia Verde</td><td>B2B</td><td>EUR 312,00</td><td><span class="status info">In preparazione</span></td></tr>
+                  <tr><td><strong>SF-2026-0179</strong><div class="meta">01 Apr 2026</div></td><td>Paolo Greco</td><td>B2C</td><td>EUR 31,90</td><td><span class="status ok">Spedito</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">Dettaglio ordine SF-2026-0184</div>
+            <div class="title">Elena Valli</div>
+            <div class="meta">Cliente B2C - Via delle Robinie 14, Milano - pagamento confermato Stripe</div>
+            <div class="stepper">
+              <div class="step done">Creato</div><div class="step done">Pagamento</div><div class="step active">Preparazione</div><div class="step">Spedizione</div><div class="step">Chiusura</div>
+            </div>
+            <div class="card" style="margin-top:16px;background:#fcf9f3">
+              <div class="section-title">Righe ordine</div>
+              <div class="line"><div><div class="title">Mandorle pelate Tuono 500g</div><div class="meta">2 confezioni - Lotto assegnato L-TU-24031</div></div><span class="status danger">Riallocare</span></div>
+              <div class="line"><div><div class="title">Farina di mandorle Filippo Cea 1kg</div><div class="meta">1 sacchetto - Stock confermato</div></div><span class="status ok">OK</span></div>
+              <div class="line"><div><div class="title">Mandorle affettate Tuono 250g</div><div class="meta">1 confezione - Promozione weekend</div></div><span class="status warn">Picking rapido</span></div>
+            </div>
+            <div class="stats-row" style="margin-top:16px">
+              <div class="mini">Totale<strong>EUR 48,20</strong></div>
+              <div class="mini">Pagamento<strong>Confermato</strong></div>
+              <div class="mini">Tracking<strong>In attesa</strong></div>
+            </div>
+            <div class="actions" style="margin-top:18px"><button class="btn">Visualizza riserve</button><button class="btn">Annulla ordine</button><button class="btn primary">Conferma preparazione</button></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const buttons=document.querySelectorAll("[data-screen]"),screens=document.querySelectorAll(".screen");
+    buttons.forEach(button=>button.addEventListener("click",()=>{const target=button.getAttribute("data-screen");buttons.forEach(b=>b.classList.remove("active"));screens.forEach(s=>s.classList.remove("active"));button.classList.add("active");document.getElementById(target).classList.add("active")}));
+  </script>
+</body>
+</html>

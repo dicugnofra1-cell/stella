@@ -74,6 +74,20 @@ public class StockReservationRepository : IStockReservationRepository
         return _context.StockReservations.AddAsync(stockReservation, cancellationToken).AsTask();
     }
 
+    public Task<decimal> GetReservedQuantityByBatchAsync(int batchId, CancellationToken cancellationToken = default)
+    {
+        return CalculateReservedQuantityAsync(
+            _context.StockReservations.Where(reservation => reservation.BatchId == batchId),
+            cancellationToken);
+    }
+
+    public Task<decimal> GetReservedQuantityByProductAsync(int productId, CancellationToken cancellationToken = default)
+    {
+        return CalculateReservedQuantityAsync(
+            _context.StockReservations.Where(reservation => reservation.ProductId == productId),
+            cancellationToken);
+    }
+
     public void Update(StockReservation stockReservation)
     {
         NormalizeReservation(stockReservation);
@@ -83,6 +97,17 @@ public class StockReservationRepository : IStockReservationRepository
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<decimal> CalculateReservedQuantityAsync(IQueryable<StockReservation> query, CancellationToken cancellationToken)
+    {
+        return await query
+            .AsNoTracking()
+            .Where(reservation =>
+                reservation.Status == "ACTIVE" ||
+                reservation.Status == "RESERVED" ||
+                reservation.Status == "PENDING")
+            .SumAsync(reservation => (decimal?)reservation.Quantity, cancellationToken) ?? 0m;
     }
 
     private static void NormalizeReservation(StockReservation stockReservation)

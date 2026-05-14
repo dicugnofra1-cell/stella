@@ -49,6 +49,20 @@ public class InventoryMovementsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("availability/by-batch/{batchId:int}")]
+    public async Task<IActionResult> GetAvailabilityByBatch(int batchId)
+    {
+        var result = await _mediator.Send(new GetInventoryAvailabilityByBatchQuery(batchId));
+        return Ok(result);
+    }
+
+    [HttpGet("availability/by-product/{productId:int}")]
+    public async Task<IActionResult> GetAvailabilityByProduct(int productId)
+    {
+        var result = await _mediator.Send(new GetInventoryAvailabilityByProductQuery(productId));
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateInventoryMovementCommand command)
     {

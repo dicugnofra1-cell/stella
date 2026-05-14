@@ -15,6 +15,10 @@ public interface IStockReservationRepository
         string? reservationType,
         CancellationToken cancellationToken = default);
 
+    Task<decimal> GetReservedQuantityByBatchAsync(int batchId, CancellationToken cancellationToken = default);
+
+    Task<decimal> GetReservedQuantityByProductAsync(int productId, CancellationToken cancellationToken = default);
+
     Task AddAsync(StockReservation stockReservation, CancellationToken cancellationToken = default);
 
     void Update(StockReservation stockReservation);

@@ -4,8 +4,10 @@ using MediatR;
 namespace Mandorle.Application.GoodsReceipts.Commands;
 
 public record RegisterGoodsReceiptCommand(
-    int SupplierId,
-    int ProductId,
+    int? SupplierId,
+    RegisterGoodsReceiptSupplierInput? NewSupplier,
+    int? ProductId,
+    RegisterGoodsReceiptProductInput? NewProduct,
     string BatchType,
     string? Variety,
     decimal Quantity,
@@ -18,3 +20,21 @@ public record RegisterGoodsReceiptCommand(
     DateOnly? ExpirationDate,
     string? Notes,
     string UserId) : IRequest<GoodsReceiptDto>;
+
+public record RegisterGoodsReceiptSupplierInput(
+    string Name,
+    string? VatNumber,
+    string? Address,
+    string? Email,
+    string? Phone,
+    string? Status);
+
+public record RegisterGoodsReceiptProductInput(
+    string Name,
+    string? Sku,
+    string? Description,
+    string UnitOfMeasure,
+    string? Category,
+    bool? ChannelB2BEnabled,
+    bool? ChannelB2CEnabled,
+    bool? Active);

@@ -26,6 +26,8 @@ public partial class StellaFruttaDbContext : DbContext
 
     public virtual DbSet<InventoryMovement> InventoryMovements { get; set; }
 
+    public virtual DbSet<Invoice> Invoices { get; set; }
+
     public virtual DbSet<NonConformity> NonConformities { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
@@ -71,7 +73,10 @@ public partial class StellaFruttaDbContext : DbContext
             entity.Property(e => e.BatchCode).HasMaxLength(100);
             entity.Property(e => e.BatchType).HasMaxLength(20);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())", "DF_Batches_CreatedAt");
+            entity.Property(e => e.InitialQuantity).HasColumnType("decimal(18, 3)");
             entity.Property(e => e.Status).HasMaxLength(30);
+            entity.Property(e => e.UnitOfMeasure).HasMaxLength(20);
+            entity.Property(e => e.Variety).HasMaxLength(100);
 
             entity.HasOne(d => d.Product).WithMany(p => p.Batches)
                 .HasForeignKey(d => d.ProductId)
@@ -129,6 +134,7 @@ public partial class StellaFruttaDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(200);
             entity.Property(e => e.Pec).HasMaxLength(150);
             entity.Property(e => e.Phone).HasMaxLength(50);
+            entity.Property(e => e.SdiCode).HasMaxLength(20);
             entity.Property(e => e.SpidIdentifier).HasMaxLength(100);
             entity.Property(e => e.Status).HasMaxLength(30);
             entity.Property(e => e.Type).HasMaxLength(20);
@@ -183,6 +189,31 @@ public partial class StellaFruttaDbContext : DbContext
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_InventoryMovements_Products");
+        });
+
+        modelBuilder.Entity<Invoice>(entity =>
+        {
+            entity.HasIndex(e => e.DocumentNumber, "UQ_Invoices_DocumentNumber").IsUnique();
+
+            entity.HasIndex(e => e.OrderId, "IX_Invoices_OrderId");
+
+            entity.HasIndex(e => e.CustomerId, "IX_Invoices_CustomerId");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())", "DF_Invoices_CreatedAt");
+            entity.Property(e => e.Currency).HasMaxLength(10);
+            entity.Property(e => e.DocumentNumber).HasMaxLength(100);
+            entity.Property(e => e.DocumentType).HasMaxLength(30);
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.Customer).WithMany()
+                .HasForeignKey(d => d.CustomerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Invoices_Customers");
+
+            entity.HasOne(d => d.Order).WithMany()
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Invoices_Orders");
         });
 
         modelBuilder.Entity<NonConformity>(entity =>

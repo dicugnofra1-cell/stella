@@ -27,6 +27,7 @@ public class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerComman
             VatNumber = request.VatNumber,
             Email = request.Email,
             Pec = request.Pec,
+            SdiCode = request.SdiCode,
             SpidIdentifier = request.SpidIdentifier,
             Phone = request.Phone,
             Status = request.Status,

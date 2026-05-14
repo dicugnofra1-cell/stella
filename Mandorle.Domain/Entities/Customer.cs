@@ -17,6 +17,8 @@ public partial class Customer
 
     public string? Pec { get; set; }
 
+    public string? SdiCode { get; set; }
+
     public string? SpidIdentifier { get; set; }
 
     public string? Phone { get; set; }

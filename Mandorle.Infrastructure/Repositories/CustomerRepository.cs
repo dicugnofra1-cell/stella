@@ -132,6 +132,7 @@ public class CustomerRepository : ICustomerRepository
                 customer.Name.Contains(normalizedSearch) ||
                 customer.Email.Contains(normalizedSearch) ||
                 (customer.Pec != null && customer.Pec.Contains(normalizedSearch)) ||
+                (customer.SdiCode != null && customer.SdiCode.Contains(normalizedSearch)) ||
                 (customer.VatNumber != null && customer.VatNumber.Contains(normalizedSearch)) ||
                 (customer.SpidIdentifier != null && customer.SpidIdentifier.Contains(normalizedSearch)));
         }
@@ -225,6 +226,7 @@ public class CustomerRepository : ICustomerRepository
         customer.Name = Normalize(customer.Name)!;
         customer.Email = Normalize(customer.Email)!;
         customer.Pec = Normalize(customer.Pec);
+        customer.SdiCode = Normalize(customer.SdiCode);
         customer.SpidIdentifier = Normalize(customer.SpidIdentifier);
         customer.Phone = Normalize(customer.Phone);
         customer.VatNumber = Normalize(customer.VatNumber);

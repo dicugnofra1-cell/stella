@@ -30,6 +30,7 @@ public class UpdateCustomerCommandHandler : IRequestHandler<UpdateCustomerComman
         customer.VatNumber = request.VatNumber;
         customer.Email = request.Email;
         customer.Pec = request.Pec;
+        customer.SdiCode = request.SdiCode;
         customer.SpidIdentifier = request.SpidIdentifier;
         customer.Phone = request.Phone;
         customer.Status = request.Status;

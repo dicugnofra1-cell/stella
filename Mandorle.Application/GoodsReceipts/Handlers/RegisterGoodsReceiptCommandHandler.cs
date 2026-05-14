@@ -1,4 +1,3 @@
-using System.Text;
 using Mandorle.Application.Batches.Mapping;
 using Mandorle.Application.GoodsReceipts.Commands;
 using Mandorle.Application.GoodsReceipts.Models;
@@ -39,17 +38,17 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
     {
         if (request.Quantity <= 0)
         {
-            throw new InvalidOperationException("La quantità deve essere maggiore di zero.");
+            throw new InvalidOperationException("La quantita deve essere maggiore di zero.");
         }
 
         if (string.IsNullOrWhiteSpace(request.UnitOfMeasure))
         {
-            throw new InvalidOperationException("L'unità di misura è obbligatoria.");
+            throw new InvalidOperationException("L'unita di misura e obbligatoria.");
         }
 
         if (string.IsNullOrWhiteSpace(request.UserId))
         {
-            throw new InvalidOperationException("L'utente che registra l'ingresso è obbligatorio.");
+            throw new InvalidOperationException("L'utente che registra l'ingresso e obbligatorio.");
         }
 
         var product = await _productRepository.GetByIdAsync(request.ProductId, cancellationToken)
@@ -62,7 +61,6 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
         var certification = await ValidateCertificationAsync(request, cancellationToken);
 
         var batchCode = await GenerateBatchCodeAsync(cancellationToken);
-        var batchNotes = ComposeBatchNotes(request, supplierDocument, certification);
 
         var batch = new Batch
         {
@@ -71,10 +69,15 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
             BatchType = request.BatchType,
             Status = BatchStatus.Ricevuto.ToDbValue(),
             BioFlag = request.BioFlag,
+            Variety = Normalize(request.Variety),
+            InitialQuantity = request.Quantity,
+            UnitOfMeasure = request.UnitOfMeasure.Trim(),
             SupplierId = supplier.Id,
+            SupplierDocumentId = supplierDocument?.Id,
+            CertificationId = certification?.Id,
             ProductionDate = request.ProductionDate,
             ExpirationDate = request.ExpirationDate,
-            Notes = batchNotes,
+            Notes = Normalize(request.Notes),
             CreatedAt = DateTime.UtcNow
         };
 
@@ -136,18 +139,18 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
 
             if (!string.Equals(certification.Status, CertificationStatus.Active.ToDbValue(), StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("La certificazione selezionata non è attiva.");
+                throw new InvalidOperationException("La certificazione selezionata non e attiva.");
             }
 
             if (certification.ExpiryDate < DateOnly.FromDateTime(DateTime.UtcNow))
             {
-                throw new InvalidOperationException("La certificazione selezionata è scaduta.");
+                throw new InvalidOperationException("La certificazione selezionata e scaduta.");
             }
         }
 
         if (request.BioFlag && certification is null)
         {
-            throw new InvalidOperationException("Per un ingresso BIO è obbligatoria una certificazione valida.");
+            throw new InvalidOperationException("Per un ingresso BIO e obbligatoria una certificazione valida.");
         }
 
         if (request.SupplierDocumentId.HasValue && certification?.DocumentId.HasValue == true && certification.DocumentId.Value != request.SupplierDocumentId.Value)
@@ -172,51 +175,8 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
         throw new InvalidOperationException("Impossibile generare un codice lotto univoco.");
     }
 
-    private static string? ComposeBatchNotes(
-        RegisterGoodsReceiptCommand request,
-        SupplierDocument? supplierDocument,
-        Certification? certification)
+    private static string? Normalize(string? value)
     {
-        var parts = new List<string>();
-
-        if (!string.IsNullOrWhiteSpace(request.Variety))
-        {
-            parts.Add($"Varietà: {request.Variety.Trim()}");
-        }
-
-        parts.Add($"Quantità iniziale: {request.Quantity} {request.UnitOfMeasure.Trim()}");
-
-        if (supplierDocument is not null)
-        {
-            parts.Add($"Documento fornitore: {supplierDocument.DocumentType} #{supplierDocument.Id}");
-        }
-
-        if (certification is not null)
-        {
-            parts.Add($"Certificazione: {certification.Type} #{certification.Id}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Notes))
-        {
-            parts.Add(request.Notes.Trim());
-        }
-
-        if (parts.Count == 0)
-        {
-            return null;
-        }
-
-        var builder = new StringBuilder();
-        foreach (var part in parts)
-        {
-            if (builder.Length > 0)
-            {
-                builder.Append(" | ");
-            }
-
-            builder.Append(part);
-        }
-
-        return builder.ToString();
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

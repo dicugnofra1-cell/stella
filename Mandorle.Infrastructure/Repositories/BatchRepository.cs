@@ -77,6 +77,7 @@ public class BatchRepository : IBatchRepository
         {
             query = query.Where(batch =>
                 batch.BatchCode.Contains(normalizedSearch) ||
+                (batch.Variety != null && batch.Variety.Contains(normalizedSearch)) ||
                 (batch.Notes != null && batch.Notes.Contains(normalizedSearch)));
         }
 
@@ -136,6 +137,8 @@ public class BatchRepository : IBatchRepository
         batch.BatchCode = Normalize(batch.BatchCode)!;
         batch.BatchType = Normalize(batch.BatchType)!;
         batch.Status = Normalize(batch.Status)!;
+        batch.Variety = Normalize(batch.Variety);
+        batch.UnitOfMeasure = Normalize(batch.UnitOfMeasure);
         batch.Notes = Normalize(batch.Notes);
     }
 

@@ -7,6 +7,7 @@ public record CustomerDto(
     string? VatNumber,
     string Email,
     string? Pec,
+    string? SdiCode,
     string? SpidIdentifier,
     string? Phone,
     string Status,

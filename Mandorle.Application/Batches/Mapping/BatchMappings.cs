@@ -14,7 +14,12 @@ internal static class BatchMappings
             batch.BatchType,
             batch.Status,
             batch.BioFlag,
+            batch.Variety,
+            batch.InitialQuantity,
+            batch.UnitOfMeasure,
             batch.SupplierId,
+            batch.SupplierDocumentId,
+            batch.CertificationId,
             batch.ProductionDate,
             batch.ExpirationDate,
             batch.Notes);

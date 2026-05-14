@@ -42,7 +42,12 @@ public class UpdateBatchCommandHandler : IRequestHandler<UpdateBatchCommand, Bat
         batch.BatchType = request.BatchType;
         batch.Status = request.Status;
         batch.BioFlag = request.BioFlag;
+        batch.Variety = request.Variety;
+        batch.InitialQuantity = request.InitialQuantity;
+        batch.UnitOfMeasure = request.UnitOfMeasure;
         batch.SupplierId = request.SupplierId;
+        batch.SupplierDocumentId = request.SupplierDocumentId;
+        batch.CertificationId = request.CertificationId;
         batch.ProductionDate = request.ProductionDate;
         batch.ExpirationDate = request.ExpirationDate;
         batch.Notes = request.Notes;

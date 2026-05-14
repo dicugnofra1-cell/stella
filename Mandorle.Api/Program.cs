@@ -22,6 +22,7 @@ builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IBatchRepository, BatchRepository>();
 builder.Services.AddScoped<IBatchLinkRepository, BatchLinkRepository>();
 builder.Services.AddScoped<IInventoryMovementRepository, InventoryMovementRepository>();
+builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<INonConformityRepository, NonConformityRepository>();
 builder.Services.AddScoped<IPublicTraceViewRepository, PublicTraceViewRepository>();
 builder.Services.AddScoped<IQualityCheckRepository, QualityCheckRepository>();

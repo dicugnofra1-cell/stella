@@ -14,6 +14,7 @@ internal static class CustomerMappings
             customer.VatNumber,
             customer.Email,
             customer.Pec,
+            customer.SdiCode,
             customer.SpidIdentifier,
             customer.Phone,
             customer.Status,

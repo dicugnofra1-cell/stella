@@ -10,6 +10,7 @@ public record UpdateCustomerCommand(
     string? VatNumber,
     string Email,
     string? Pec,
+    string? SdiCode,
     string? SpidIdentifier,
     string? Phone,
     string Status) : IRequest<CustomerDto?>;

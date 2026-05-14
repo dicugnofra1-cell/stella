@@ -17,7 +17,17 @@ public partial class Batch
 
     public bool BioFlag { get; set; }
 
+    public string? Variety { get; set; }
+
+    public decimal? InitialQuantity { get; set; }
+
+    public string? UnitOfMeasure { get; set; }
+
     public int? SupplierId { get; set; }
+
+    public int? SupplierDocumentId { get; set; }
+
+    public int? CertificationId { get; set; }
 
     public DateOnly? ProductionDate { get; set; }
 

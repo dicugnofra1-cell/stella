@@ -90,31 +90,10 @@ public class GetPublicTraceViewByBatchIdQueryHandler : IRequestHandler<GetPublic
             traceView.LastUpdatedAt,
             "Stella",
             supplier?.Name,
-            ExtractVariety(batch.Notes),
+            batch.Variety,
             BuildCertificationInfo(traceView.BioFlag, certifications),
             latestQualityCheck is null ? null : $"Controllo qualita: {latestQualityCheck.Result} - {latestQualityCheck.CheckedAt:dd/MM/yyyy}",
             relevantActivities);
-    }
-
-    private static string? ExtractVariety(string? notes)
-    {
-        if (string.IsNullOrWhiteSpace(notes))
-        {
-            return null;
-        }
-
-        const string prefix = "Varieta: ";
-        var startIndex = notes.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
-        if (startIndex < 0)
-        {
-            return null;
-        }
-
-        startIndex += prefix.Length;
-        var endIndex = notes.IndexOf(" | ", startIndex, StringComparison.Ordinal);
-        return endIndex >= 0
-            ? notes[startIndex..endIndex].Trim()
-            : notes[startIndex..].Trim();
     }
 
     private static string? BuildCertificationInfo(bool bioFlag, IReadOnlyList<Certification> certifications)

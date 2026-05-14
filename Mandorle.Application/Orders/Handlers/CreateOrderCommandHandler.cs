@@ -14,19 +14,25 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
     private readonly IOrderItemRepository _orderItemRepository;
     private readonly IProductRepository _productRepository;
     private readonly IBatchRepository _batchRepository;
+    private readonly IInventoryMovementRepository _inventoryMovementRepository;
+    private readonly IStockReservationRepository _stockReservationRepository;
 
     public CreateOrderCommandHandler(
         ICustomerRepository customerRepository,
         IOrderRepository orderRepository,
         IOrderItemRepository orderItemRepository,
         IProductRepository productRepository,
-        IBatchRepository batchRepository)
+        IBatchRepository batchRepository,
+        IInventoryMovementRepository inventoryMovementRepository,
+        IStockReservationRepository stockReservationRepository)
     {
         _customerRepository = customerRepository;
         _orderRepository = orderRepository;
         _orderItemRepository = orderItemRepository;
         _productRepository = productRepository;
         _batchRepository = batchRepository;
+        _inventoryMovementRepository = inventoryMovementRepository;
+        _stockReservationRepository = stockReservationRepository;
     }
 
     public async Task<OrderDto> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -51,7 +57,8 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
 
         foreach (var item in request.Items)
         {
-            await EnsureProductAndBatchAreValidAsync(item.ProductId, item.ReservedBatchId, cancellationToken);
+            var reservedBatchId = await ResolveReservedBatchIdAsync(item, cancellationToken);
+            await EnsureProductAndBatchAreValidAsync(item.ProductId, reservedBatchId, cancellationToken);
 
             var orderItem = new OrderItem
             {
@@ -60,19 +67,83 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice,
                 TaxAmount = item.TaxAmount,
-                ReservedBatchId = item.ReservedBatchId,
+                ReservedBatchId = reservedBatchId,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _orderItemRepository.AddAsync(orderItem, cancellationToken);
-        }
+            await _orderItemRepository.SaveChangesAsync(cancellationToken);
 
-        await _orderItemRepository.SaveChangesAsync(cancellationToken);
+            if (reservedBatchId.HasValue)
+            {
+                var reservation = new StockReservation
+                {
+                    OrderId = order.Id,
+                    OrderItemId = orderItem.Id,
+                    ProductId = item.ProductId,
+                    BatchId = reservedBatchId.Value,
+                    Quantity = item.Quantity,
+                    Status = "ACTIVE",
+                    ReservationType = "ORDER",
+                    CreatedAt = DateTime.UtcNow,
+                    Notes = "Riserva automatica generata in creazione ordine."
+                };
+
+                await _stockReservationRepository.AddAsync(reservation, cancellationToken);
+                await _stockReservationRepository.SaveChangesAsync(cancellationToken);
+            }
+        }
 
         var createdOrder = await _orderRepository.GetByIdAsync(order.Id, includeItems: true, cancellationToken)
             ?? throw new InvalidOperationException("The created order could not be reloaded.");
 
         return createdOrder.ToDto();
+    }
+
+    private async Task<int?> ResolveReservedBatchIdAsync(CreateOrderItemModel item, CancellationToken cancellationToken)
+    {
+        if (item.ReservedBatchId.HasValue)
+        {
+            await EnsureBatchHasAvailabilityAsync(item.ReservedBatchId.Value, item.Quantity, cancellationToken);
+            return item.ReservedBatchId.Value;
+        }
+
+        var candidates = await _batchRepository.GetSaleCandidatesAsync(
+            item.ProductId,
+            item.BatchType,
+            item.BioFlag,
+            cancellationToken);
+
+        foreach (var batch in candidates)
+        {
+            if (!IsEligibleForSale(batch.Status))
+            {
+                continue;
+            }
+
+            var physicalStock = await _inventoryMovementRepository.GetBalanceByBatchAsync(batch.Id, cancellationToken);
+            var reservedStock = await _stockReservationRepository.GetReservedQuantityByBatchAsync(batch.Id, cancellationToken);
+            var availableStock = physicalStock - reservedStock;
+
+            if (availableStock >= item.Quantity)
+            {
+                return batch.Id;
+            }
+        }
+
+        throw new InvalidOperationException("Nessun lotto disponibile compatibile con la quantita richiesta.");
+    }
+
+    private async Task EnsureBatchHasAvailabilityAsync(int batchId, decimal quantity, CancellationToken cancellationToken)
+    {
+        var physicalStock = await _inventoryMovementRepository.GetBalanceByBatchAsync(batchId, cancellationToken);
+        var reservedStock = await _stockReservationRepository.GetReservedQuantityByBatchAsync(batchId, cancellationToken);
+        var availableStock = physicalStock - reservedStock;
+
+        if (availableStock < quantity)
+        {
+            throw new InvalidOperationException("Il lotto selezionato non ha disponibilita sufficiente.");
+        }
     }
 
     private async Task EnsureProductAndBatchAreValidAsync(int productId, int? reservedBatchId, CancellationToken cancellationToken)
@@ -90,5 +161,13 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
                 throw new InvalidOperationException("The selected reserved batch does not belong to the selected product.");
             }
         }
+    }
+
+    private static bool IsEligibleForSale(string status)
+    {
+        return status.Equals("RICEVUTO", StringComparison.OrdinalIgnoreCase) ||
+               status.Equals("DISPONIBILE", StringComparison.OrdinalIgnoreCase) ||
+               status.Equals("PARZIALMENTE_VENDUTO", StringComparison.OrdinalIgnoreCase) ||
+               status.Equals("CONFEZIONATO", StringComparison.OrdinalIgnoreCase);
     }
 }

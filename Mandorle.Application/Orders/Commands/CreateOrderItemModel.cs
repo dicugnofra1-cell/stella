@@ -5,4 +5,6 @@ public record CreateOrderItemModel(
     decimal Quantity,
     decimal UnitPrice,
     decimal? TaxAmount,
-    int? ReservedBatchId);
+    int? ReservedBatchId,
+    string? BatchType,
+    bool? BioFlag);

@@ -2,6 +2,7 @@ using Mandorle.Application.Invoices.Commands;
 using Mandorle.Application.Invoices.Mapping;
 using Mandorle.Application.Invoices.Models;
 using Mandorle.Domain.Entities;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using MediatR;
 
@@ -30,9 +31,36 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
         var customer = await _customerRepository.GetByIdAsync(order.CustomerId, cancellationToken: cancellationToken)
             ?? throw new InvalidOperationException("Il cliente collegato all'ordine non esiste.");
 
-        if (!customer.Type.Equals("B2B", StringComparison.OrdinalIgnoreCase))
+        if (!order.OrderType.Equals("B2B", StringComparison.OrdinalIgnoreCase) || !customer.Type.Equals("B2B", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("La fattura V1 e consentita solo per clienti B2B.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.DocumentNumber))
+        {
+            throw new InvalidOperationException("Il numero documento e obbligatorio.");
+        }
+
+        if (!OperationalEnumMappings.TryParseInvoiceDocumentType(request.DocumentType, out var documentType))
+        {
+            throw new InvalidOperationException("Il tipo documento deve essere FATTURA o DDT.");
+        }
+
+        if (string.IsNullOrWhiteSpace(customer.VatNumber))
+        {
+            throw new InvalidOperationException("Il cliente B2B deve avere una partita IVA valorizzata.");
+        }
+
+        if (documentType == InvoiceDocumentType.Fattura &&
+            string.IsNullOrWhiteSpace(customer.Pec) &&
+            string.IsNullOrWhiteSpace(customer.SdiCode))
+        {
+            throw new InvalidOperationException("Per emettere una fattura serve almeno PEC o codice SDI del cliente.");
+        }
+
+        if (await _invoiceRepository.GetByOrderIdAsync(order.Id, cancellationToken) is not null)
+        {
+            throw new InvalidOperationException("Per questo ordine esiste gia un documento associato.");
         }
 
         if (await _invoiceRepository.ExistsByDocumentNumberAsync(request.DocumentNumber, cancellationToken: cancellationToken))
@@ -45,7 +73,7 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
             OrderId = order.Id,
             CustomerId = customer.Id,
             DocumentNumber = request.DocumentNumber,
-            DocumentType = request.DocumentType,
+            DocumentType = documentType.ToDbValue(),
             TotalAmount = order.TotalAmount,
             Currency = order.Currency,
             IssueDate = request.IssueDate ?? DateTime.UtcNow,

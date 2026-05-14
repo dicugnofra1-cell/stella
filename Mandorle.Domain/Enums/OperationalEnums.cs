@@ -58,6 +58,12 @@ public enum MovementReferenceType
     Order
 }
 
+public enum InvoiceDocumentType
+{
+    Fattura,
+    Ddt
+}
+
 public static class OperationalEnumMappings
 {
     private static readonly IReadOnlyDictionary<string, BatchStatus> BatchStatuses = new Dictionary<string, BatchStatus>(StringComparer.OrdinalIgnoreCase)
@@ -167,6 +173,13 @@ public static class OperationalEnumMappings
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
     };
 
+    public static string ToDbValue(this InvoiceDocumentType documentType) => documentType switch
+    {
+        InvoiceDocumentType.Fattura => "FATTURA",
+        InvoiceDocumentType.Ddt => "DDT",
+        _ => throw new ArgumentOutOfRangeException(nameof(documentType), documentType, null)
+    };
+
     public static bool IsEligibleForSale(this BatchStatus status)
     {
         return status is BatchStatus.Ricevuto or BatchStatus.Disponibile or BatchStatus.ParzialmenteVenduto or BatchStatus.Confezionato;
@@ -205,5 +218,23 @@ public static class OperationalEnumMappings
     public static bool TryParseOrderStatus(string value, out OrderStatus status)
     {
         return OrderStatuses.TryGetValue(value, out status);
+    }
+
+    public static bool TryParseInvoiceDocumentType(string value, out InvoiceDocumentType documentType)
+    {
+        if (string.Equals(value, "FATTURA", StringComparison.OrdinalIgnoreCase))
+        {
+            documentType = InvoiceDocumentType.Fattura;
+            return true;
+        }
+
+        if (string.Equals(value, "DDT", StringComparison.OrdinalIgnoreCase))
+        {
+            documentType = InvoiceDocumentType.Ddt;
+            return true;
+        }
+
+        documentType = default;
+        return false;
     }
 }

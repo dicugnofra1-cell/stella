@@ -92,6 +92,34 @@ public class BatchRepository : IBatchRepository
         return _context.Batches.AddAsync(batch, cancellationToken).AsTask();
     }
 
+    public async Task<IReadOnlyList<Batch>> GetSaleCandidatesAsync(
+        int productId,
+        string? batchType,
+        bool? bioFlag,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Batches
+            .AsNoTracking()
+            .Where(batch => batch.ProductId == productId);
+
+        var normalizedBatchType = Normalize(batchType);
+        if (!string.IsNullOrWhiteSpace(normalizedBatchType))
+        {
+            query = query.Where(batch => batch.BatchType == normalizedBatchType);
+        }
+
+        if (bioFlag.HasValue)
+        {
+            query = query.Where(batch => batch.BioFlag == bioFlag.Value);
+        }
+
+        return await query
+            .OrderBy(batch => batch.ProductionDate ?? DateOnly.MaxValue)
+            .ThenBy(batch => batch.CreatedAt)
+            .ThenBy(batch => batch.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public void Update(Batch batch)
     {
         NormalizeBatch(batch);

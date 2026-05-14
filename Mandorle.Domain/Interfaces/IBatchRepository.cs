@@ -19,6 +19,12 @@ public interface IBatchRepository
         bool? bioFlag,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Batch>> GetSaleCandidatesAsync(
+        int productId,
+        string? batchType,
+        bool? bioFlag,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(Batch batch, CancellationToken cancellationToken = default);
 
     void Update(Batch batch);

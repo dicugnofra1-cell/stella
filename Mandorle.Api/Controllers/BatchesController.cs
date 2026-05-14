@@ -50,6 +50,17 @@ public class BatchesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("suggest-for-sale")]
+    public async Task<IActionResult> SuggestForSale(
+        [FromQuery] int productId,
+        [FromQuery] decimal quantity,
+        [FromQuery] string? batchType,
+        [FromQuery] bool? bioFlag)
+    {
+        var result = await _mediator.Send(new SuggestBatchForSaleQuery(productId, quantity, batchType, bioFlag));
+        return result is null ? NotFound() : Ok(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateBatchCommand command)
     {

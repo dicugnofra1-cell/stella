@@ -7,4 +7,10 @@ public record PublicTraceViewDto(
     bool BioFlag,
     string? OriginInfo,
     string? MainDates,
-    DateTime LastUpdatedAt);
+    DateTime LastUpdatedAt,
+    string CompanyName,
+    string? SupplierName,
+    string? Variety,
+    string? CertificationInfo,
+    string? LatestQualityCheck,
+    IReadOnlyList<string> RelevantActivities);

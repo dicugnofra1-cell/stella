@@ -14,6 +14,12 @@ internal static class PublicTraceViewMappings
             traceView.BioFlag,
             traceView.OriginInfo,
             traceView.MainDates,
-            traceView.LastUpdatedAt);
+            traceView.LastUpdatedAt,
+            "Stella",
+            null,
+            null,
+            null,
+            null,
+            Array.Empty<string>());
     }
 }

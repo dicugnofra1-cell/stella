@@ -1,4 +1,3 @@
-using Mandorle.Application.Traceability.Mapping;
 using Mandorle.Application.Traceability.Models;
 using Mandorle.Application.Traceability.Queries;
 using Mandorle.Domain.Interfaces;
@@ -8,16 +7,20 @@ namespace Mandorle.Application.Traceability.Handlers;
 
 public class GetPublicTraceViewByBatchCodeQueryHandler : IRequestHandler<GetPublicTraceViewByBatchCodeQuery, PublicTraceViewDto?>
 {
-    private readonly IPublicTraceViewRepository _publicTraceViewRepository;
+    private readonly IBatchRepository _batchRepository;
+    private readonly IMediator _mediator;
 
-    public GetPublicTraceViewByBatchCodeQueryHandler(IPublicTraceViewRepository publicTraceViewRepository)
+    public GetPublicTraceViewByBatchCodeQueryHandler(IBatchRepository batchRepository, IMediator mediator)
     {
-        _publicTraceViewRepository = publicTraceViewRepository;
+        _batchRepository = batchRepository;
+        _mediator = mediator;
     }
 
     public async Task<PublicTraceViewDto?> Handle(GetPublicTraceViewByBatchCodeQuery request, CancellationToken cancellationToken)
     {
-        var traceView = await _publicTraceViewRepository.GetByBatchCodeAsync(request.BatchCode, cancellationToken);
-        return traceView?.ToDto();
+        var batch = await _batchRepository.GetByBatchCodeAsync(request.BatchCode, cancellationToken);
+        return batch is null
+            ? null
+            : await _mediator.Send(new GetPublicTraceViewByBatchIdQuery(batch.Id), cancellationToken);
     }
 }

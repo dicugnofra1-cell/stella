@@ -1,4 +1,5 @@
 using Mandorle.Domain.Entities;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using Mandorle.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -101,12 +102,16 @@ public class StockReservationRepository : IStockReservationRepository
 
     private async Task<decimal> CalculateReservedQuantityAsync(IQueryable<StockReservation> query, CancellationToken cancellationToken)
     {
+        var activeStatus = StockReservationStatus.Active.ToDbValue();
+        var reservedStatus = StockReservationStatus.Reserved.ToDbValue();
+        var pendingStatus = StockReservationStatus.Pending.ToDbValue();
+
         return await query
             .AsNoTracking()
             .Where(reservation =>
-                reservation.Status == "ACTIVE" ||
-                reservation.Status == "RESERVED" ||
-                reservation.Status == "PENDING")
+                reservation.Status == activeStatus ||
+                reservation.Status == reservedStatus ||
+                reservation.Status == pendingStatus)
             .SumAsync(reservation => (decimal?)reservation.Quantity, cancellationToken) ?? 0m;
     }
 

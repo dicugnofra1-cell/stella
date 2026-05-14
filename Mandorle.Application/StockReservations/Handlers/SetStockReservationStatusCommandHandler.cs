@@ -1,4 +1,5 @@
 using Mandorle.Application.StockReservations.Commands;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using MediatR;
 
@@ -21,15 +22,17 @@ public class SetStockReservationStatusCommandHandler : IRequestHandler<SetStockR
             return false;
         }
 
-        reservation.Status = request.Status;
+        var normalizedStatus = Normalize(request.Status)!;
+
+        reservation.Status = normalizedStatus;
         reservation.UpdatedAt = DateTime.UtcNow;
 
-        if (request.Status.Equals("RELEASED", StringComparison.OrdinalIgnoreCase))
+        if (normalizedStatus.Equals(StockReservationStatus.Released.ToDbValue(), StringComparison.OrdinalIgnoreCase))
         {
             reservation.ReleasedAt = DateTime.UtcNow;
         }
 
-        if (request.Status.Equals("CONSUMED", StringComparison.OrdinalIgnoreCase))
+        if (normalizedStatus.Equals(StockReservationStatus.Consumed.ToDbValue(), StringComparison.OrdinalIgnoreCase))
         {
             reservation.ConsumedAt = DateTime.UtcNow;
         }
@@ -38,5 +41,10 @@ public class SetStockReservationStatusCommandHandler : IRequestHandler<SetStockR
         await _stockReservationRepository.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+
+    private static string? Normalize(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
     }
 }

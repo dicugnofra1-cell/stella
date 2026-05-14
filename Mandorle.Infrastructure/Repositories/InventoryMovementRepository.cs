@@ -1,4 +1,5 @@
 using Mandorle.Domain.Entities;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using Mandorle.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -7,22 +8,6 @@ namespace Mandorle.Infrastructure.Repositories;
 
 public class InventoryMovementRepository : IInventoryMovementRepository
 {
-    private static readonly string[] PositiveMovementTypes =
-    [
-        "LOAD",
-        "RETURN_IN",
-        "ADJUSTMENT_IN"
-    ];
-
-    private static readonly string[] NegativeMovementTypes =
-    [
-        "UNLOAD",
-        "RETURN_OUT",
-        "WASTE",
-        "TRANSFER_OUT",
-        "ADJUSTMENT_OUT"
-    ];
-
     private readonly StellaFruttaDbContext _context;
 
     public InventoryMovementRepository(StellaFruttaDbContext context)
@@ -114,17 +99,17 @@ public class InventoryMovementRepository : IInventoryMovementRepository
 
     private static decimal SignedQuantity(string movementType, decimal quantity)
     {
-        if (PositiveMovementTypes.Contains(movementType))
+        if (!OperationalEnumMappings.TryParseInventoryMovementType(movementType, out var parsedMovementType))
         {
-            return quantity;
+            return 0m;
         }
 
-        if (NegativeMovementTypes.Contains(movementType))
+        if (parsedMovementType.IsNegative())
         {
             return -quantity;
         }
 
-        return 0m;
+        return quantity;
     }
 
     private static void NormalizeMovement(InventoryMovement inventoryMovement)

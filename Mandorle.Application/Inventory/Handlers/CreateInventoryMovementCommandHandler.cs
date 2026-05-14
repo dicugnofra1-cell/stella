@@ -2,6 +2,7 @@ using Mandorle.Application.Inventory.Commands;
 using Mandorle.Application.Inventory.Mapping;
 using Mandorle.Application.Inventory.Models;
 using Mandorle.Domain.Entities;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using MediatR;
 
@@ -9,15 +10,6 @@ namespace Mandorle.Application.Inventory.Handlers;
 
 public class CreateInventoryMovementCommandHandler : IRequestHandler<CreateInventoryMovementCommand, InventoryMovementDto>
 {
-    private static readonly string[] NegativeMovementTypes =
-    [
-        "UNLOAD",
-        "RETURN_OUT",
-        "WASTE",
-        "TRANSFER_OUT",
-        "ADJUSTMENT_OUT"
-    ];
-
     private readonly IInventoryMovementRepository _inventoryMovementRepository;
     private readonly IBatchRepository _batchRepository;
     private readonly IProductRepository _productRepository;
@@ -53,7 +45,7 @@ public class CreateInventoryMovementCommandHandler : IRequestHandler<CreateInven
 
         var normalizedMovementType = Normalize(request.MovementType)!;
 
-        if (NegativeMovementTypes.Contains(normalizedMovementType))
+        if (OperationalEnumMappings.TryParseInventoryMovementType(normalizedMovementType, out var movementType) && movementType.IsNegative())
         {
             var currentBalance = await _inventoryMovementRepository.GetBalanceByBatchAsync(request.BatchId, cancellationToken);
             if (currentBalance < request.Quantity)

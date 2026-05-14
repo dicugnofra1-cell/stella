@@ -4,6 +4,7 @@ using Mandorle.Application.GoodsReceipts.Commands;
 using Mandorle.Application.GoodsReceipts.Models;
 using Mandorle.Application.Inventory.Mapping;
 using Mandorle.Domain.Entities;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using MediatR;
 
@@ -11,11 +12,6 @@ namespace Mandorle.Application.GoodsReceipts.Handlers;
 
 public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsReceiptCommand, GoodsReceiptDto>
 {
-    private const string BatchStatusReceived = "RICEVUTO";
-    private const string MovementTypeLoad = "LOAD";
-    private const string MovementReferenceType = "GOODS_RECEIPT";
-    private const string ActiveCertificationStatus = "ACTIVE";
-
     private readonly IBatchRepository _batchRepository;
     private readonly IProductRepository _productRepository;
     private readonly ISupplierRepository _supplierRepository;
@@ -73,7 +69,7 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
             BatchCode = batchCode,
             ProductId = product.Id,
             BatchType = request.BatchType,
-            Status = BatchStatusReceived,
+            Status = BatchStatus.Ricevuto.ToDbValue(),
             BioFlag = request.BioFlag,
             SupplierId = supplier.Id,
             ProductionDate = request.ProductionDate,
@@ -88,11 +84,11 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
         {
             ProductId = product.Id,
             Batch = batch,
-            MovementType = MovementTypeLoad,
+            MovementType = InventoryMovementType.Load.ToDbValue(),
             Quantity = request.Quantity,
             MovementDate = request.ReceivedAt ?? DateTime.UtcNow,
             Reason = "INGRESSO_MERCE",
-            ReferenceType = MovementReferenceType,
+            ReferenceType = MovementReferenceType.GoodsReceipt.ToDbValue(),
             ReferenceId = batchCode,
             UserId = request.UserId,
             CreatedAt = DateTime.UtcNow
@@ -138,7 +134,7 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
                 throw new InvalidOperationException("La certificazione selezionata non esiste o non appartiene al fornitore.");
             }
 
-            if (!string.Equals(certification.Status, ActiveCertificationStatus, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(certification.Status, CertificationStatus.Active.ToDbValue(), StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("La certificazione selezionata non è attiva.");
             }

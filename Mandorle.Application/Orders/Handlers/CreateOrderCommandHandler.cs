@@ -2,6 +2,7 @@ using Mandorle.Application.Orders.Commands;
 using Mandorle.Application.Orders.Mapping;
 using Mandorle.Application.Orders.Models;
 using Mandorle.Domain.Entities;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using MediatR;
 
@@ -83,8 +84,8 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
                     ProductId = item.ProductId,
                     BatchId = reservedBatchId.Value,
                     Quantity = item.Quantity,
-                    Status = "ACTIVE",
-                    ReservationType = "ORDER",
+                    Status = StockReservationStatus.Active.ToDbValue(),
+                    ReservationType = StockReservationType.Order.ToDbValue(),
                     CreatedAt = DateTime.UtcNow,
                     Notes = "Riserva automatica generata in creazione ordine."
                 };
@@ -116,7 +117,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
 
         foreach (var batch in candidates)
         {
-            if (!IsEligibleForSale(batch.Status))
+            if (!OperationalEnumMappings.TryParseBatchStatus(batch.Status, out var batchStatus) || !batchStatus.IsEligibleForSale())
             {
                 continue;
             }
@@ -161,13 +162,5 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
                 throw new InvalidOperationException("The selected reserved batch does not belong to the selected product.");
             }
         }
-    }
-
-    private static bool IsEligibleForSale(string status)
-    {
-        return status.Equals("RICEVUTO", StringComparison.OrdinalIgnoreCase) ||
-               status.Equals("DISPONIBILE", StringComparison.OrdinalIgnoreCase) ||
-               status.Equals("PARZIALMENTE_VENDUTO", StringComparison.OrdinalIgnoreCase) ||
-               status.Equals("CONFEZIONATO", StringComparison.OrdinalIgnoreCase);
     }
 }

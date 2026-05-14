@@ -1,5 +1,6 @@
 using Mandorle.Application.Batches.Models;
 using Mandorle.Application.Batches.Queries;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using MediatR;
 
@@ -7,14 +8,6 @@ namespace Mandorle.Application.Batches.Handlers;
 
 public class SuggestBatchForSaleQueryHandler : IRequestHandler<SuggestBatchForSaleQuery, BatchSaleSuggestionDto?>
 {
-    private static readonly string[] AllowedStatuses =
-    [
-        "RICEVUTO",
-        "DISPONIBILE",
-        "PARZIALMENTE_VENDUTO",
-        "CONFEZIONATO"
-    ];
-
     private readonly IBatchRepository _batchRepository;
     private readonly IInventoryMovementRepository _inventoryMovementRepository;
     private readonly IStockReservationRepository _stockReservationRepository;
@@ -44,7 +37,7 @@ public class SuggestBatchForSaleQueryHandler : IRequestHandler<SuggestBatchForSa
 
         foreach (var batch in candidates)
         {
-            if (!AllowedStatuses.Contains(batch.Status, StringComparer.OrdinalIgnoreCase))
+            if (!OperationalEnumMappings.TryParseBatchStatus(batch.Status, out var batchStatus) || !batchStatus.IsEligibleForSale())
             {
                 continue;
             }

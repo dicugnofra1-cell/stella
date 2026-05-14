@@ -2,6 +2,7 @@ using Mandorle.Application.StockReservations.Commands;
 using Mandorle.Application.StockReservations.Mapping;
 using Mandorle.Application.StockReservations.Models;
 using Mandorle.Domain.Entities;
+using Mandorle.Domain.Enums;
 using Mandorle.Domain.Interfaces;
 using MediatR;
 
@@ -65,8 +66,8 @@ public class CreateStockReservationCommandHandler : IRequestHandler<CreateStockR
         }
 
         var availableBalance = request.BatchId.HasValue
-            ? await _inventoryMovementRepository.GetBalanceByBatchAsync(request.BatchId.Value, cancellationToken)
-            : await _inventoryMovementRepository.GetBalanceByProductAsync(request.ProductId, cancellationToken);
+            ? await GetAvailableBalanceByBatchAsync(request.BatchId.Value, cancellationToken)
+            : await GetAvailableBalanceByProductAsync(request.ProductId, cancellationToken);
 
         if (availableBalance < request.Quantity)
         {
@@ -91,5 +92,19 @@ public class CreateStockReservationCommandHandler : IRequestHandler<CreateStockR
         await _stockReservationRepository.SaveChangesAsync(cancellationToken);
 
         return reservation.ToDto();
+    }
+
+    private async Task<decimal> GetAvailableBalanceByBatchAsync(int batchId, CancellationToken cancellationToken)
+    {
+        var physicalBalance = await _inventoryMovementRepository.GetBalanceByBatchAsync(batchId, cancellationToken);
+        var reservedBalance = await _stockReservationRepository.GetReservedQuantityByBatchAsync(batchId, cancellationToken);
+        return physicalBalance - reservedBalance;
+    }
+
+    private async Task<decimal> GetAvailableBalanceByProductAsync(int productId, CancellationToken cancellationToken)
+    {
+        var physicalBalance = await _inventoryMovementRepository.GetBalanceByProductAsync(productId, cancellationToken);
+        var reservedBalance = await _stockReservationRepository.GetReservedQuantityByProductAsync(productId, cancellationToken);
+        return physicalBalance - reservedBalance;
     }
 }

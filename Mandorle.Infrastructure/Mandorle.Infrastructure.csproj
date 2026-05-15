@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Mandorle.Application\Mandorle.Application.csproj" />
     <ProjectReference Include="..\Mandorle.Domain\Mandorle.Domain.csproj" />
   </ItemGroup>
 

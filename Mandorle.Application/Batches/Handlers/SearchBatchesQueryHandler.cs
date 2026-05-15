@@ -24,6 +24,7 @@ public class SearchBatchesQueryHandler : IRequestHandler<SearchBatchesQuery, IRe
             request.BatchType,
             request.Status,
             request.BioFlag,
+            request.CreatedOn,
             cancellationToken);
 
         return batches.Select(batch => batch.ToDto()).ToList();

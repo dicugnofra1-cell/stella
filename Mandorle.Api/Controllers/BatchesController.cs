@@ -23,9 +23,10 @@ public class BatchesController : ControllerBase
         [FromQuery] int? supplierId,
         [FromQuery] string? batchType,
         [FromQuery] string? status,
-        [FromQuery] bool? bioFlag)
+        [FromQuery] bool? bioFlag,
+        [FromQuery] DateOnly? createdOn)
     {
-        var result = await _mediator.Send(new SearchBatchesQuery(search, productId, supplierId, batchType, status, bioFlag));
+        var result = await _mediator.Send(new SearchBatchesQuery(search, productId, supplierId, batchType, status, bioFlag, createdOn));
         return Ok(result);
     }
 

@@ -9,4 +9,5 @@ public record SearchBatchesQuery(
     int? SupplierId,
     string? BatchType,
     string? Status,
-    bool? BioFlag) : IRequest<IReadOnlyList<BatchDto>>;
+    bool? BioFlag,
+    DateOnly? CreatedOn) : IRequest<IReadOnlyList<BatchDto>>;

@@ -1,4 +1,5 @@
 using Mandorle.Application.GoodsReceipts.Commands;
+using Mandorle.Application.GoodsReceipts.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +14,13 @@ public class GoodsReceiptsController : ControllerBase
     public GoodsReceiptsController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    [HttpGet("today")]
+    public async Task<IActionResult> GetToday([FromQuery] string? search)
+    {
+        var result = await _mediator.Send(new GetTodayGoodsReceiptsQuery(search), HttpContext.RequestAborted);
+        return Ok(result);
     }
 
     [HttpPost]

@@ -22,6 +22,7 @@ internal static class BatchMappings
             batch.CertificationId,
             batch.ProductionDate,
             batch.ExpirationDate,
-            batch.Notes);
+            batch.Notes,
+            batch.CreatedAt);
     }
 }

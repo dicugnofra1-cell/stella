@@ -1,4 +1,5 @@
 using Mandorle.Application;
+using Mandorle.Application.GoodsReceipts.Abstractions;
 using Mandorle.Domain.Interfaces;
 using Mandorle.Infrastructure.Data;
 using Mandorle.Infrastructure.Repositories;
@@ -21,6 +22,7 @@ builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IBatchRepository, BatchRepository>();
 builder.Services.AddScoped<IBatchLinkRepository, BatchLinkRepository>();
+builder.Services.AddScoped<IGoodsReceiptReadRepository, GoodsReceiptReadRepository>();
 builder.Services.AddScoped<IInventoryMovementRepository, InventoryMovementRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<INonConformityRepository, NonConformityRepository>();
@@ -41,4 +43,23 @@ app.UseSwaggerUI();
 
 app.MapControllers();
 
+await WarmUpGoodsReceiptsAsync(app);
+
 app.Run();
+
+static async Task WarmUpGoodsReceiptsAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("StartupWarmup");
+
+    try
+    {
+        var repository = scope.ServiceProvider.GetRequiredService<IGoodsReceiptReadRepository>();
+        await repository.GetTodayAsync(DateOnly.FromDateTime(DateTime.Now), null, CancellationToken.None);
+        logger.LogInformation("Warm-up goods receipts completato.");
+    }
+    catch (Exception exception)
+    {
+        logger.LogWarning(exception, "Warm-up goods receipts non completato.");
+    }
+}

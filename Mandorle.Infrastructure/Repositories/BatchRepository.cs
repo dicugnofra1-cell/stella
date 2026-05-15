@@ -41,6 +41,7 @@ public class BatchRepository : IBatchRepository
         string? batchType,
         string? status,
         bool? bioFlag,
+        DateOnly? createdOn,
         CancellationToken cancellationToken = default)
     {
         var query = _context.Batches.AsNoTracking().AsQueryable();
@@ -71,6 +72,13 @@ public class BatchRepository : IBatchRepository
         if (bioFlag.HasValue)
         {
             query = query.Where(batch => batch.BioFlag == bioFlag.Value);
+        }
+
+        if (createdOn.HasValue)
+        {
+            var from = createdOn.Value.ToDateTime(TimeOnly.MinValue);
+            var to = from.AddDays(1);
+            query = query.Where(batch => batch.CreatedAt >= from && batch.CreatedAt < to);
         }
 
         if (!string.IsNullOrWhiteSpace(normalizedSearch))

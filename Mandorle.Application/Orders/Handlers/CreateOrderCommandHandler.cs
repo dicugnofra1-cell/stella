@@ -38,8 +38,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
 
     public async Task<OrderDto> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
-        var customer = await _customerRepository.GetByIdAsync(request.CustomerId, cancellationToken: cancellationToken)
-            ?? throw new InvalidOperationException("The selected customer does not exist.");
+        var customer = await ResolveCustomerAsync(request, cancellationToken);
 
         var order = new Order
         {
@@ -101,6 +100,114 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         return createdOrder.ToDto();
     }
 
+    private async Task<Customer> ResolveCustomerAsync(CreateOrderCommand request, CancellationToken cancellationToken)
+    {
+        var hasCustomerId = request.CustomerId.HasValue;
+        var hasNewCustomer = request.NewCustomer is not null;
+
+        if (hasCustomerId == hasNewCustomer)
+        {
+            throw new InvalidOperationException("Indica un cliente esistente oppure un nuovo cliente da creare.");
+        }
+
+        if (hasCustomerId)
+        {
+            return await _customerRepository.GetByIdAsync(request.CustomerId!.Value, cancellationToken: cancellationToken)
+                ?? throw new InvalidOperationException("Il cliente selezionato non esiste.");
+        }
+
+        var newCustomer = request.NewCustomer!;
+        if (string.IsNullOrWhiteSpace(newCustomer.Name))
+        {
+            throw new InvalidOperationException("Il nome del cliente e obbligatorio.");
+        }
+
+        if (string.IsNullOrWhiteSpace(newCustomer.Email))
+        {
+            throw new InvalidOperationException("L'email del cliente e obbligatoria.");
+        }
+
+        var orderType = Normalize(request.OrderType) ?? throw new InvalidOperationException("Il tipo ordine e obbligatorio.");
+        var customerType = Normalize(newCustomer.Type) ?? orderType;
+
+        if (!string.Equals(orderType, customerType, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Il tipo cliente deve essere coerente con il tipo ordine.");
+        }
+
+        var existingCustomer = await FindExistingCustomerAsync(customerType, newCustomer, cancellationToken);
+        if (existingCustomer is not null)
+        {
+            return existingCustomer;
+        }
+
+        if (string.Equals(customerType, "B2B", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(newCustomer.VatNumber))
+            {
+                throw new InvalidOperationException("Per un cliente B2B la partita IVA e obbligatoria.");
+            }
+        }
+
+        var customer = new Customer
+        {
+            Type = customerType,
+            Name = newCustomer.Name.Trim(),
+            VatNumber = Normalize(newCustomer.VatNumber),
+            Email = newCustomer.Email.Trim(),
+            Pec = Normalize(newCustomer.Pec),
+            SdiCode = Normalize(newCustomer.SdiCode),
+            SpidIdentifier = Normalize(newCustomer.SpidIdentifier),
+            Phone = Normalize(newCustomer.Phone),
+            Status = Normalize(newCustomer.Status) ?? "ATTIVO",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await EnsureUniqueCustomerFieldsAsync(customer, cancellationToken);
+        await _customerRepository.AddAsync(customer, cancellationToken);
+        await _customerRepository.SaveChangesAsync(cancellationToken);
+
+        return customer;
+    }
+
+    private async Task<Customer?> FindExistingCustomerAsync(string customerType, CreateOrderCustomerInput newCustomer, CancellationToken cancellationToken)
+    {
+        if (string.Equals(customerType, "B2B", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(newCustomer.VatNumber))
+        {
+            var customerByVat = await _customerRepository.GetByVatNumberAsync(newCustomer.VatNumber, cancellationToken);
+            if (customerByVat is not null)
+            {
+                return customerByVat;
+            }
+        }
+
+        return await _customerRepository.GetByEmailAsync(newCustomer.Email.Trim(), cancellationToken);
+    }
+
+    private async Task EnsureUniqueCustomerFieldsAsync(Customer customer, CancellationToken cancellationToken)
+    {
+        if (await _customerRepository.ExistsByEmailAsync(customer.Email, cancellationToken: cancellationToken))
+        {
+            throw new InvalidOperationException("Esiste gia un cliente con la stessa email.");
+        }
+
+        if (await _customerRepository.ExistsByPecAsync(customer.Pec, cancellationToken: cancellationToken))
+        {
+            throw new InvalidOperationException("Esiste gia un cliente con la stessa PEC.");
+        }
+
+        if (await _customerRepository.ExistsBySpidIdentifierAsync(customer.SpidIdentifier, cancellationToken: cancellationToken))
+        {
+            throw new InvalidOperationException("Esiste gia un cliente con lo stesso SPID.");
+        }
+
+        if (await _customerRepository.ExistsByVatNumberAsync(customer.VatNumber, cancellationToken: cancellationToken))
+        {
+            throw new InvalidOperationException("Esiste gia un cliente con la stessa partita IVA.");
+        }
+    }
+
     private async Task<int?> ResolveReservedBatchIdAsync(CreateOrderItemModel item, CancellationToken cancellationToken)
     {
         if (item.ReservedBatchId.HasValue)
@@ -150,17 +257,22 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
     private async Task EnsureProductAndBatchAreValidAsync(int productId, int? reservedBatchId, CancellationToken cancellationToken)
     {
         var product = await _productRepository.GetByIdAsync(productId, cancellationToken)
-            ?? throw new InvalidOperationException("The selected product does not exist.");
+            ?? throw new InvalidOperationException("Il prodotto selezionato non esiste.");
 
         if (reservedBatchId.HasValue)
         {
             var batch = await _batchRepository.GetByIdAsync(reservedBatchId.Value, cancellationToken)
-                ?? throw new InvalidOperationException("The selected reserved batch does not exist.");
+                ?? throw new InvalidOperationException("Il lotto selezionato non esiste.");
 
             if (batch.ProductId != product.Id)
             {
-                throw new InvalidOperationException("The selected reserved batch does not belong to the selected product.");
+                throw new InvalidOperationException("Il lotto selezionato non appartiene al prodotto indicato.");
             }
         }
+    }
+
+    private static string? Normalize(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

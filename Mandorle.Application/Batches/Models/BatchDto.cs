@@ -15,4 +15,5 @@ public record BatchDto(
     int? CertificationId,
     DateOnly? ProductionDate,
     DateOnly? ExpirationDate,
-    string? Notes);
+    string? Notes,
+    DateTime CreatedAt);

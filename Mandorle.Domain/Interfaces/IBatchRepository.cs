@@ -17,6 +17,7 @@ public interface IBatchRepository
         string? batchType,
         string? status,
         bool? bioFlag,
+        DateOnly? createdOn,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Batch>> GetSaleCandidatesAsync(

@@ -11,6 +11,7 @@ public record RegisterGoodsReceiptCommand(
     string BatchType,
     string? Variety,
     decimal Quantity,
+    decimal PurchaseUnitPrice,
     string UnitOfMeasure,
     bool BioFlag,
     int? SupplierDocumentId,
@@ -35,6 +36,7 @@ public record RegisterGoodsReceiptProductInput(
     string? Description,
     string UnitOfMeasure,
     string? Category,
+    string DefaultBatchType,
     bool? ChannelB2BEnabled,
     bool? ChannelB2CEnabled,
     bool? Active);

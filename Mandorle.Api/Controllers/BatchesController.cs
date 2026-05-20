@@ -30,6 +30,13 @@ public class BatchesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("active")]
+    public async Task<IActionResult> GetActive([FromQuery] string? search)
+    {
+        var result = await _mediator.Send(new GetActiveBatchesQuery(search));
+        return Ok(result);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -56,17 +63,17 @@ public class BatchesController : ControllerBase
         [FromQuery] int productId,
         [FromQuery] decimal quantity,
         [FromQuery] string? batchType,
-        [FromQuery] bool? bioFlag)
+        [FromQuery] bool? bioFlag,
+        [FromQuery] string? variety)
     {
-        var result = await _mediator.Send(new SuggestBatchForSaleQuery(productId, quantity, batchType, bioFlag));
+        var result = await _mediator.Send(new SuggestBatchForSaleQuery(productId, quantity, batchType, bioFlag, variety));
         return result is null ? NotFound() : Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateBatchCommand command)
+    public IActionResult Create([FromBody] CreateBatchCommand command)
     {
-        var result = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        return BadRequest("I lotti vengono generati automaticamente dalla registrazione della merce in ingresso.");
     }
 
     [HttpPut("{id:int}")]
@@ -100,6 +107,13 @@ public class BatchesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{childBatchId:int}/parent-details")]
+    public async Task<IActionResult> GetParentDetails(int childBatchId)
+    {
+        var result = await _mediator.Send(new GetBatchParentDetailsQuery(childBatchId));
+        return Ok(result);
+    }
+
     [HttpGet("{parentBatchId:int}/children")]
     public async Task<IActionResult> GetChildren(int parentBatchId)
     {
@@ -119,6 +133,13 @@ public class BatchesController : ControllerBase
     {
         var result = await _mediator.Send(command);
         return CreatedAtAction(nameof(GetBatchLinkById), new { childBatchId = result.ChildBatchId, batchLinkId = result.Id }, result);
+    }
+
+    [HttpPost("processing")]
+    public async Task<IActionResult> RegisterProcessing([FromBody] RegisterBatchProcessingCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return Ok(result);
     }
 
     [HttpPut("{childBatchId:int}/parents/{batchLinkId:int}")]

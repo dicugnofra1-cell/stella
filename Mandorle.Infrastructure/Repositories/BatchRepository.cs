@@ -105,6 +105,7 @@ public class BatchRepository : IBatchRepository
         int productId,
         string? batchType,
         bool? bioFlag,
+        string? variety,
         CancellationToken cancellationToken = default)
     {
         var query = _context.Batches
@@ -120,6 +121,12 @@ public class BatchRepository : IBatchRepository
         if (bioFlag.HasValue)
         {
             query = query.Where(batch => batch.BioFlag == bioFlag.Value);
+        }
+
+        var normalizedVariety = Normalize(variety);
+        if (!string.IsNullOrWhiteSpace(normalizedVariety))
+        {
+            query = query.Where(batch => batch.Variety == normalizedVariety);
         }
 
         return await query

@@ -74,6 +74,7 @@ public partial class StellaFruttaDbContext : DbContext
             entity.Property(e => e.BatchType).HasMaxLength(20);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())", "DF_Batches_CreatedAt");
             entity.Property(e => e.InitialQuantity).HasColumnType("decimal(18, 3)");
+            entity.Property(e => e.PurchaseUnitPrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Status).HasMaxLength(30);
             entity.Property(e => e.UnitOfMeasure).HasMaxLength(20);
             entity.Property(e => e.Variety).HasMaxLength(100);
@@ -203,6 +204,12 @@ public partial class StellaFruttaDbContext : DbContext
             entity.Property(e => e.Currency).HasMaxLength(10);
             entity.Property(e => e.DocumentNumber).HasMaxLength(100);
             entity.Property(e => e.DocumentType).HasMaxLength(30);
+            entity.Property(e => e.ExternalDocumentId).HasMaxLength(150);
+            entity.Property(e => e.ExternalDocumentNumber).HasMaxLength(100);
+            entity.Property(e => e.ExternalProvider).HasMaxLength(50);
+            entity.Property(e => e.ExternalSyncError).HasMaxLength(1000);
+            entity.Property(e => e.Source).HasMaxLength(30);
+            entity.Property(e => e.SyncStatus).HasMaxLength(30);
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Customer).WithMany()
@@ -284,6 +291,7 @@ public partial class StellaFruttaDbContext : DbContext
                 .HasDefaultValue(true, "DF_Products_ChannelB2CEnabled")
                 .HasColumnName("ChannelB2CEnabled");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())", "DF_Products_CreatedAt");
+            entity.Property(e => e.DefaultBatchType).HasMaxLength(30);
             entity.Property(e => e.Name).HasMaxLength(150);
             entity.Property(e => e.Sku).HasMaxLength(50);
             entity.Property(e => e.UnitOfMeasure).HasMaxLength(20);

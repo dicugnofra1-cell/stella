@@ -9,6 +9,7 @@ public record CreateProductCommand(
     string? Description,
     string UnitOfMeasure,
     string? Category,
+    string DefaultBatchType,
     bool ChannelB2BEnabled,
     bool ChannelB2CEnabled,
     bool Active) : IRequest<ProductDto>;

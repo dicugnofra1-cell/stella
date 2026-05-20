@@ -41,6 +41,11 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
             throw new InvalidOperationException("La quantita deve essere maggiore di zero.");
         }
 
+        if (request.PurchaseUnitPrice <= 0)
+        {
+            throw new InvalidOperationException("Il prezzo di acquisto deve essere maggiore di zero.");
+        }
+
         if (string.IsNullOrWhiteSpace(request.UnitOfMeasure))
         {
             throw new InvalidOperationException("L'unita di misura e obbligatoria.");
@@ -68,7 +73,8 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
             BioFlag = request.BioFlag,
             Variety = Normalize(request.Variety),
             InitialQuantity = request.Quantity,
-            UnitOfMeasure = request.UnitOfMeasure.Trim(),
+            PurchaseUnitPrice = request.PurchaseUnitPrice,
+            UnitOfMeasure = Normalize(request.UnitOfMeasure)!,
             SupplierId = supplier.Id,
             SupplierDocumentId = supplierDocument?.Id,
             CertificationId = certification?.Id,
@@ -101,7 +107,8 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
             batch.ToDto(),
             movement.ToDto(),
             request.Quantity,
-            request.UnitOfMeasure.Trim(),
+            request.PurchaseUnitPrice,
+            Normalize(request.UnitOfMeasure)!,
             supplierDocument?.Id,
             certification?.Id);
     }
@@ -118,8 +125,11 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
 
         if (hasProductId)
         {
-            return await _productRepository.GetByIdAsync(request.ProductId!.Value, cancellationToken)
+            var existingProduct = await _productRepository.GetByIdAsync(request.ProductId!.Value, cancellationToken)
                 ?? throw new InvalidOperationException("Il prodotto selezionato non esiste.");
+
+            EnsureBatchTypeMatchesProduct(existingProduct, request.BatchType);
+            return existingProduct;
         }
 
         var newProduct = request.NewProduct!;
@@ -133,19 +143,27 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
             throw new InvalidOperationException("L'unita di misura del nuovo prodotto e obbligatoria.");
         }
 
+        if (string.IsNullOrWhiteSpace(newProduct.DefaultBatchType))
+        {
+            throw new InvalidOperationException("La tipologia predefinita del prodotto e obbligatoria.");
+        }
+
         var sku = await GenerateProductSkuAsync(newProduct, request.BatchType, cancellationToken);
         var product = new Product
         {
             Sku = sku,
-            Name = newProduct.Name.Trim(),
+            Name = Normalize(newProduct.Name)!,
             Description = Normalize(newProduct.Description),
-            UnitOfMeasure = newProduct.UnitOfMeasure.Trim(),
+            UnitOfMeasure = Normalize(newProduct.UnitOfMeasure)!,
             Category = Normalize(newProduct.Category) ?? Normalize(request.BatchType),
+            DefaultBatchType = Normalize(newProduct.DefaultBatchType)!,
             ChannelB2BEnabled = newProduct.ChannelB2BEnabled ?? true,
             ChannelB2CEnabled = newProduct.ChannelB2CEnabled ?? true,
             Active = newProduct.Active ?? true,
             CreatedAt = DateTime.UtcNow
         };
+
+        EnsureBatchTypeMatchesProduct(product, request.BatchType);
 
         await _productRepository.AddAsync(product, cancellationToken);
         await _productRepository.SaveChangesAsync(cancellationToken);
@@ -194,7 +212,7 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
 
         var supplier = new Supplier
         {
-            Name = newSupplier.Name.Trim(),
+            Name = Normalize(newSupplier.Name)!,
             VatNumber = Normalize(newSupplier.VatNumber),
             Address = Normalize(newSupplier.Address),
             Email = Normalize(newSupplier.Email),
@@ -315,6 +333,14 @@ public class RegisterGoodsReceiptCommandHandler : IRequestHandler<RegisterGoodsR
 
     private static string? Normalize(string? value)
     {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
+    }
+
+    private static void EnsureBatchTypeMatchesProduct(Product product, string requestedBatchType)
+    {
+        if (!string.Equals(Normalize(product.DefaultBatchType), Normalize(requestedBatchType), StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("La tipologia del lotto deve essere coerente con la tipologia predefinita del prodotto selezionato.");
+        }
     }
 }

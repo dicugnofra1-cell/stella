@@ -21,6 +21,8 @@ public partial class Batch
 
     public decimal? InitialQuantity { get; set; }
 
+    public decimal? PurchaseUnitPrice { get; set; }
+
     public string? UnitOfMeasure { get; set; }
 
     public int? SupplierId { get; set; }

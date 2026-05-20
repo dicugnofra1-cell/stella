@@ -9,6 +9,7 @@ public record BatchDto(
     bool BioFlag,
     string? Variety,
     decimal? InitialQuantity,
+    decimal? PurchaseUnitPrice,
     string? UnitOfMeasure,
     int? SupplierId,
     int? SupplierDocumentId,

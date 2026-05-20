@@ -24,6 +24,7 @@ public interface IBatchRepository
         int productId,
         string? batchType,
         bool? bioFlag,
+        string? variety,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(Batch batch, CancellationToken cancellationToken = default);

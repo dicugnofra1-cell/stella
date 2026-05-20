@@ -16,6 +16,7 @@ internal static class BatchMappings
             batch.BioFlag,
             batch.Variety,
             batch.InitialQuantity,
+            batch.PurchaseUnitPrice,
             batch.UnitOfMeasure,
             batch.SupplierId,
             batch.SupplierDocumentId,

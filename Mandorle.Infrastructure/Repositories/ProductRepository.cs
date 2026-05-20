@@ -106,10 +106,11 @@ public class ProductRepository : IProductRepository
         product.Description = Normalize(product.Description);
         product.UnitOfMeasure = Normalize(product.UnitOfMeasure)!;
         product.Category = Normalize(product.Category);
+        product.DefaultBatchType = Normalize(product.DefaultBatchType)!;
     }
 
     private static string? Normalize(string? value)
     {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
     }
 }

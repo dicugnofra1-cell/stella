@@ -97,6 +97,12 @@ public class InvoiceRepository : IInvoiceRepository
         invoice.DocumentNumber = Normalize(invoice.DocumentNumber)!;
         invoice.DocumentType = Normalize(invoice.DocumentType)!;
         invoice.Currency = Normalize(invoice.Currency)!;
+        invoice.Source = Normalize(invoice.Source)!;
+        invoice.SyncStatus = Normalize(invoice.SyncStatus)!;
+        invoice.ExternalProvider = Normalize(invoice.ExternalProvider);
+        invoice.ExternalDocumentId = Normalize(invoice.ExternalDocumentId);
+        invoice.ExternalDocumentNumber = Normalize(invoice.ExternalDocumentNumber);
+        invoice.ExternalSyncError = Normalize(invoice.ExternalSyncError);
         invoice.Notes = Normalize(invoice.Notes);
     }
 

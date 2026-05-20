@@ -17,6 +17,8 @@ public partial class Product
 
     public string? Category { get; set; }
 
+    public string DefaultBatchType { get; set; } = null!;
+
     public bool ChannelB2BEnabled { get; set; }
 
     public bool ChannelB2CEnabled { get; set; }

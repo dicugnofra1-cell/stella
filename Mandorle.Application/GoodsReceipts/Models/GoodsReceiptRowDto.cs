@@ -2,6 +2,7 @@ namespace Mandorle.Application.GoodsReceipts.Models;
 
 public record GoodsReceiptRowDto(
     int BatchId,
+    int ProductId,
     string BatchCode,
     DateTime CreatedAt,
     string SupplierName,
@@ -9,6 +10,7 @@ public record GoodsReceiptRowDto(
     string BatchType,
     bool BioFlag,
     decimal Quantity,
+    decimal? PurchaseUnitPrice,
     string UnitOfMeasure,
     string Status,
     string? Variety,

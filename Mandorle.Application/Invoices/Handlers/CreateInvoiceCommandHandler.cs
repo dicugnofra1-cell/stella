@@ -51,13 +51,6 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
             throw new InvalidOperationException("Il cliente B2B deve avere una partita IVA valorizzata.");
         }
 
-        if (documentType == InvoiceDocumentType.Fattura &&
-            string.IsNullOrWhiteSpace(customer.Pec) &&
-            string.IsNullOrWhiteSpace(customer.SdiCode))
-        {
-            throw new InvalidOperationException("Per emettere una fattura serve almeno PEC o codice SDI del cliente.");
-        }
-
         if (await _invoiceRepository.GetByOrderIdAsync(order.Id, cancellationToken) is not null)
         {
             throw new InvalidOperationException("Per questo ordine esiste gia un documento associato.");
@@ -74,9 +67,16 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
             CustomerId = customer.Id,
             DocumentNumber = request.DocumentNumber,
             DocumentType = documentType.ToDbValue(),
+            Source = "STELLA",
+            SyncStatus = "PREPARATO",
             TotalAmount = order.TotalAmount,
             Currency = order.Currency,
             IssueDate = request.IssueDate ?? DateTime.UtcNow,
+            ExternalProvider = null,
+            ExternalDocumentId = null,
+            ExternalDocumentNumber = null,
+            ExternalSyncAt = null,
+            ExternalSyncError = null,
             Notes = request.Notes,
             CreatedAt = DateTime.UtcNow
         };

@@ -7,4 +7,5 @@ public record SuggestBatchForSaleQuery(
     int ProductId,
     decimal Quantity,
     string? BatchType,
-    bool? BioFlag) : IRequest<BatchSaleSuggestionDto?>;
+    bool? BioFlag,
+    string? Variety) : IRequest<BatchSaleSuggestionDto?>;

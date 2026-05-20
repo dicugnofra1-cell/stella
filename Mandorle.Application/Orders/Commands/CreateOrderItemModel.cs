@@ -7,4 +7,5 @@ public record CreateOrderItemModel(
     decimal? TaxAmount,
     int? ReservedBatchId,
     string? BatchType,
-    bool? BioFlag);
+    bool? BioFlag,
+    string? Variety);

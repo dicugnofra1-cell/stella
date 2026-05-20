@@ -29,6 +29,7 @@ BEGIN
     )
     SELECT
         batch.Id AS BatchId,
+        batch.ProductId,
         batch.BatchCode,
         batch.CreatedAt,
         ISNULL(supplier.Name, N'Fornitore non collegato') AS SupplierName,

@@ -220,6 +220,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
             item.ProductId,
             item.BatchType,
             item.BioFlag,
+            item.Variety,
             cancellationToken);
 
         foreach (var batch in candidates)

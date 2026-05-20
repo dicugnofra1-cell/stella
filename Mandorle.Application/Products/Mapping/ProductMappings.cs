@@ -14,6 +14,7 @@ internal static class ProductMappings
             product.Description,
             product.UnitOfMeasure,
             product.Category,
+            product.DefaultBatchType,
             product.ChannelB2BEnabled,
             product.ChannelB2CEnabled,
             product.Active);

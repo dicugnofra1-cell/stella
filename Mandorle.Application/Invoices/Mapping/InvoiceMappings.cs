@@ -13,9 +13,16 @@ internal static class InvoiceMappings
             invoice.CustomerId,
             invoice.DocumentNumber,
             invoice.DocumentType,
+            invoice.Source,
+            invoice.SyncStatus,
             invoice.TotalAmount,
             invoice.Currency,
             invoice.IssueDate,
+            invoice.ExternalProvider,
+            invoice.ExternalDocumentId,
+            invoice.ExternalDocumentNumber,
+            invoice.ExternalSyncAt,
+            invoice.ExternalSyncError,
             invoice.Notes);
     }
 }

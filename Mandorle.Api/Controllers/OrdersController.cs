@@ -29,6 +29,13 @@ public class OrdersController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("overview")]
+    public async Task<IActionResult> GetOverview([FromQuery] string? orderType, [FromQuery] string? search)
+    {
+        var result = await _mediator.Send(new GetOrderOverviewQuery(orderType, search));
+        return Ok(result);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {

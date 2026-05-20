@@ -33,6 +33,7 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
         product.Description = request.Description;
         product.UnitOfMeasure = request.UnitOfMeasure;
         product.Category = request.Category;
+        product.DefaultBatchType = request.DefaultBatchType;
         product.ChannelB2BEnabled = request.ChannelB2BEnabled;
         product.ChannelB2CEnabled = request.ChannelB2CEnabled;
         product.Active = request.Active;

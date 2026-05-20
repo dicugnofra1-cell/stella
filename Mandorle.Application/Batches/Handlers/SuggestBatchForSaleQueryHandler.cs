@@ -33,6 +33,7 @@ public class SuggestBatchForSaleQueryHandler : IRequestHandler<SuggestBatchForSa
             request.ProductId,
             request.BatchType,
             request.BioFlag,
+            request.Variety,
             cancellationToken);
 
         foreach (var batch in candidates)

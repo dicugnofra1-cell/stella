@@ -7,6 +7,7 @@ public record GoodsReceiptDto(
     BatchDto Batch,
     InventoryMovementDto InventoryMovement,
     decimal InitialQuantity,
+    decimal PurchaseUnitPrice,
     string UnitOfMeasure,
     int? SupplierDocumentId,
     int? CertificationId);

@@ -55,7 +55,8 @@ public enum CertificationStatus
 public enum MovementReferenceType
 {
     GoodsReceipt,
-    Order
+    Order,
+    Processing
 }
 
 public enum InvoiceDocumentType
@@ -170,6 +171,7 @@ public static class OperationalEnumMappings
     {
         MovementReferenceType.GoodsReceipt => "GOODS_RECEIPT",
         MovementReferenceType.Order => "ORDER",
+        MovementReferenceType.Processing => "PROCESSING",
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
     };
 
@@ -187,7 +189,7 @@ public static class OperationalEnumMappings
 
     public static bool IsStockExit(this OrderStatus status)
     {
-        return status is OrderStatus.Confermato or OrderStatus.Spedito or OrderStatus.Evaso or OrderStatus.Confirmed or OrderStatus.Shipped or OrderStatus.Completed;
+        return status is OrderStatus.Spedito or OrderStatus.Shipped;
     }
 
     public static bool IsNegative(this InventoryMovementType movementType)

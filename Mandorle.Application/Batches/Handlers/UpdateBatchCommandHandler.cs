@@ -30,6 +30,8 @@ public class UpdateBatchCommandHandler : IRequestHandler<UpdateBatchCommand, Bat
             return null;
         }
 
+        EnsureImmutableFields(batch, request);
+
         if (await _batchRepository.ExistsByBatchCodeAsync(request.BatchCode, request.Id, cancellationToken))
         {
             throw new InvalidOperationException("A batch with the same batch code already exists.");
@@ -57,6 +59,44 @@ public class UpdateBatchCommandHandler : IRequestHandler<UpdateBatchCommand, Bat
         await _batchRepository.SaveChangesAsync(cancellationToken);
 
         return batch.ToDto();
+    }
+
+    private static void EnsureImmutableFields(Domain.Entities.Batch batch, UpdateBatchCommand request)
+    {
+        if (!string.Equals(batch.BatchCode, request.BatchCode, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Il codice lotto non puo essere modificato manualmente.");
+        }
+
+        if (batch.ProductId != request.ProductId)
+        {
+            throw new InvalidOperationException("Il prodotto del lotto deriva dall'ingresso merce e non puo essere modificato.");
+        }
+
+        if (!string.Equals(batch.BatchType, request.BatchType, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("La tipologia del lotto deriva dall'ingresso merce e non puo essere modificata.");
+        }
+
+        if (batch.BioFlag != request.BioFlag)
+        {
+            throw new InvalidOperationException("Il flag BIO del lotto deriva dall'ingresso merce e non puo essere modificato.");
+        }
+
+        if (batch.InitialQuantity != request.InitialQuantity)
+        {
+            throw new InvalidOperationException("La quantita iniziale del lotto deriva dall'ingresso merce e non puo essere modificata.");
+        }
+
+        if (!string.Equals(batch.UnitOfMeasure, request.UnitOfMeasure, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("L'unita di misura del lotto deriva dall'ingresso merce e non puo essere modificata.");
+        }
+
+        if (batch.SupplierId != request.SupplierId)
+        {
+            throw new InvalidOperationException("Il fornitore del lotto deriva dall'ingresso merce e non puo essere modificato.");
+        }
     }
 
     private async Task EnsureReferencesExistAsync(int productId, int? supplierId, CancellationToken cancellationToken)
